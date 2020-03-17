@@ -1,0 +1,66 @@
+"0","candy <- read_csv(""https://raw.githubusercontent.com/fivethirtyeight/data/master/candy-power-ranking/candy-data.csv"")"
+"2","Parsed with column specification:
+cols(
+  competitorname = [31mcol_character()[39m,
+  chocolate = [32mcol_double()[39m,
+  fruity = [32mcol_double()[39m,
+  caramel = [32mcol_double()[39m,
+  peanutyalmondy = [32mcol_double()[39m,
+  nougat = [32mcol_double()[39m,
+  crispedricewafer = [32mcol_double()[39m,
+  hard = [32mcol_double()[39m,
+  bar = [32mcol_double()[39m,
+  pluribus = [32mcol_double()[39m,
+  sugarpercent = [32mcol_double()[39m,
+  pricepercent = [32mcol_double()[39m,
+  winpercent = [32mcol_double()[39m
+)
+"
+"0","glimpse(candy)"
+"1","Observations: 85
+"
+"1","Variables: 13
+"
+"1","$ competitorname   [3m[38;5;246m<chr>[39m[23m ""100 Grand"", ""3 Musketeers"", ""One dime"", ""One quarter"", ""Air Heads"", ""A...
+"
+"1",""
+"1","$ chocolate        [3m[38;5;246m<dbl>[39m[23m 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,...
+"
+"1",""
+"1","$ fruity           [3m[38;5;246m<dbl>[39m[23m 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0,...
+"
+"1",""
+"1","$ caramel          [3m[38;5;246m<dbl>[39m[23m 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,...
+"
+"1",""
+"1","$ peanutyalmondy   [3m[38;5;246m<dbl>[39m[23m 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,...
+"
+"1",""
+"1","$ nougat           [3m[38;5;246m<dbl>[39m[23m 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,...
+"
+"1",""
+"1","$ crispedricewafer [3m[38;5;246m<dbl>[39m[23m 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,...
+"
+"1",""
+"1","$ hard             [3m[38;5;246m<dbl>[39m[23m 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0,...
+"
+"1",""
+"1","$ bar              [3m[38;5;246m<dbl>[39m[23m 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,...
+"
+"1",""
+"1","$ pluribus         [3m[38;5;246m<dbl>[39m[23m 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0,...
+"
+"1",""
+"1","$ sugarpercent     [3m[38;5;246m<dbl>[39m[23m 0.732, 0.604, 0.011, 0.011, 0.906, 0.465, 0.604, 0.313, 0.906, 0.604, 0...
+"
+"1",""
+"1","$ pricepercent     [3m[38;5;246m<dbl>[39m[23m 0.860, 0.511, 0.116, 0.511, 0.511, 0.767, 0.767, 0.511, 0.325, 0.325, 0...
+"
+"1",""
+"1","$ winpercent       [3m[38;5;246m<dbl>[39m[23m 66.97173, 67.60294, 32.26109, 46.11650, 52.34146, 50.34755, 56.91455, 2...
+"
+"0","sum(is.na(candy))"
+"1","[1]"
+"1"," 0"
+"1","
+"

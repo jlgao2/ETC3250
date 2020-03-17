@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1584417075674.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "8EB63774",
+    "lastKnownWriteTime" : 1584403265,
+    "last_content_update" : 1584420206786,
+    "path" : "~/R/ETC3250/lab2.Rmd",
+    "project_path" : "lab2.Rmd",
+    "properties" : {
+        "cursorPosition" : "54,7",
+        "scrollLine" : "31"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
