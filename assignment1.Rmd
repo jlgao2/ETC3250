@@ -38,20 +38,21 @@ library(tidyverse)
 
 1. This question explores bias-variance trade-off. Read in the simulated data `cuddly_koalas.rds`. This data is generated using the following function:
 
-$$ y = -4x + 6x^2 - cos(x) + \varepsilon, ~~\text{where}~~x\in [-10, 20], ~~\varepsilon\sim N(0, 50^2)$$
+$$ y = -4x + 6x^2 - 100sin(x) + \varepsilon, ~~\text{where}~~x\in [-10, 20], ~~\varepsilon\sim N(0, 50^2)$$
 
 a. (1)Make a plot of the data, overlaying the true model.
 
 ```{r}
 # Read data
-df <- readRDS("data/cuddle_koalas.rds")
+df <- readRDS("data/cuddly_koalas.rds")
+glimpse(df)
 
 # Compute the true model values
-df <- df %>% mutate(true=???)
+df <- df %>% mutate(true= -4*x+6*x^2 - 100 * sin(x) )
 
 # Plot data and true model 
-ggplot(df, aes(x=x, y=y)) + geom_???() +
-  geom_???(aes(y=???), colour="blue")
+ggplot(df, aes(x=x, y=y)) + geom_point() +
+  geom_line(aes(y=true), colour="blue")
 ```
 
 b. (1)Break the data into a $2/3$ training and a $1/3$ test set. (Hint: You can use the function `createDataPartition` from the `caret` package.) Fit a linear model, using the training set. Compute the training MSE and test MSE. Overlay the linear model fit on a plot of the data and true model.
@@ -59,21 +60,21 @@ b. (1)Break the data into a $2/3$ training and a $1/3$ test set. (Hint: You can 
 ```{r}
 # Create training and test sets
 set.seed(20200318)
-tr_indx <- createDataPartition(df$y, p=???)$Resample1
-tr <- df[???,]
+tr_indx <- createDataPartition(df$y, p=0.66)$Resample1
+tr <- df[tr_indx,]
 ts <- df[-tr_indx,]
 
 # Fit linear model
-fit1 <- lm(???, data=tr)
-tr_aug <- augment(???, tr)
-ts_aug <- augment(???, newdata=ts)
-ts_aug$.resid <- ts_aug$y - ???
-tr_mse <- sum(???^2)/length(???)
-ts_mse <- sum(???^2)/length(???)
+fit1 <- lm(y~x, data=tr)
+tr_aug <- augment(fit1, tr)
+ts_aug <- augment(fit1, newdata=ts)
+ts_aug$.resid <- ts_aug$y - ts_aug$.fitted
+tr_mse <- sum((tr_aug$y-tr_aug$.fitted)^2)/length(ts_aug$.fitted)
+ts_mse <- sum(ts_aug$.resid^2)/length(ts_aug$.resid)
 
 # Plot the data, true model and fitted model
-ggplot(???, aes(x=x, y=y)) + geom_???() +
-  geom_???(aes(y=???)) + geom_???(data=???, aes(x=x, y=.fitted), colour="orange")
+ggplot(df, aes(x=x, y=y)) + geom_point() +
+  geom_line(aes(y=true)) + geom_point(data=fit1, aes(x=x, y=.fitted), colour="orange")
 ```
 
 c. Now examine the behaviour of the training and test MSE, for a `loess` fit. 
