@@ -33,9 +33,58 @@ The objectives for this week are:
 
 Textbook questions, chapter 2: 1, 2, 4
 
+## Question 1
+### (a)
+Flexible better - if the sample size n is extremely large then a flexible learning method would be suitable as variance is limited both by the bigness of the dataset and fewer regressors may mean that the sample could have omitted variable bias and the flexible model is better at reducing that
+### (b)
+Flexible worse - variance is high with limited dataset and the lots of variables can allow bias to be minimised  
+### (c)
+Flexible is better as the fitted model will be more able to fit the non linear shape of the underlying data
+### (d)
+Flexible is worse if the variance of the error term is extremely high as the flexible approach would fit to the error and give super noisy results
+
+## Question 2
+### (a)
+Since all the variables, independant and dependant are continous variables - it is a regression problem. We are more interested in inference because we are indeed interested in the coefficients. The n is 500 and the p is 3
+### (b)
+We are interested in a categorical independant variable, therefore the problem is a classification problem. The problem is predictive as we are not interested in why the product will be a success or failure, but only whether it will fail. The n of this problem is 20, and the p is 13
+### (c)
+This is a regression problem, the we are interested in the predictive outcome and not neccesarily interested in interpreting the coefficients. We have n = 52 and p = 3
+
+## Question 4
+### (a)
+Classification may be useful in the real life for
+  - determining which genre music is - response is the genre, the predictor can be tempo, key, instruments used etc, I think inferring the relationships may be more useful than a black box prediction for most applications of this classifcation
+  - determining whether a bump is a cancer or somethong - predictive problem - response var is cancer vs benign, the predictors can be size growth, colour change etc
+  - classifying between rabbits and hares
+### (b)
+Regression is great for 
+- Determining height from other factors
+- Determining price of a thing from past price and price of other things
+- Determining tempertature from tweets
+
+  
 # Do it yourself
 
 Textbook question 7
+
+### 7a 
+ 
+1 - 3       - Red
+2 - 2       - Red
+3 - sqrt(10)- Red
+4 - sqrt(5) - Green
+5 - sqrt(2) - Green
+6 - sqrt(3) - Red
+
+### 7b 
+Green - Pr(Y=green|Pr X = green in test set is 1)
+
+### 7c
+Red - Pr(Y=red = 2/3 for 3 closest neighbours)
+
+### 7d
+If highly nonlinear, then the value of K should be smallish to allow for more jagged edges
 
 # Practice
 
@@ -43,12 +92,65 @@ Complete these exercises by writing your responses into an Rmarkdown document.
 Give your Rmd file to another group member, outputting to `html` and see if they can `knit` it. 
 
 (a) Download the chocolates data set, and read into R (recommend using `read_csv` from the `tidyverse` suite). 
-
+```{r}
+library('tidyverse')
+choc = read_csv("~/R/ETC3250/chocolates.csv")
+```
 *About the data:* The chocolates data was compiled by students in a previous class of Prof Cook, by collecting nutrition information on the chocolates as listed on their internet sites. All numbers were normalised to be equivalent to a 100g serving. Units of measurement are listed in the variable name.
 
 (b) Take a look at the type of variables in the data. If your question is "How do milk and dark chocolates differ?" what type of problem have you got?
+I have a classification problem, with the goal of inferring relationships
+
 (c) Compute the means and standard deviations for milk and dark on each of the variables. Make a nice table summary. (Try using the pipe operator, with the wrangling verbs `group_by` and `summarise`, and make the table with the `kableExtra` package.)
+```{r}
+by_type <- choc %>%
+  group_by(Type) 
+library(kableExtra)
+not_all_na <- function(x) any(!is.na(x))
+by_type %>%
+  summarise_all(list(mean = mean, sd = sd)) %>%
+  select_if(not_all_na) %>%
+  kable()%>%
+  kable_styling()
+```
 (d) Make side-by-side boxplots for each of the variables, for type of chocolate. (Use the grammar of graphics in `ggplot2`.) Write a paragraph explaining how the type of chocolate differs nutritionally.
+
+```{r}
+
+library(gtable)
+library(gridExtra)
+
+p1 <- ggplot(choc, aes(x=Type, y=Calories)) + geom_boxplot() + theme_dark()
+p2 <- ggplot(choc, aes(x=Type, y=CalFat)) + geom_boxplot() + theme_dark()
+p3 <- ggplot(choc, aes(x=Type, y=TotFat_g)) + geom_boxplot() + theme_dark()
+p4 <- ggplot(choc, aes(x=Type, y=SatFat_g)) + geom_boxplot() + theme_dark()
+p5 <- ggplot(choc, aes(x=Type, y=Chol_mg)) + geom_boxplot() + theme_dark()
+p6 <- ggplot(choc, aes(x=Type, y=Na_mg)) + geom_boxplot() + theme_dark()
+p7 <- ggplot(choc, aes(x=Type, y=Carbs_g)) + geom_boxplot() + theme_dark()
+p8 <- ggplot(choc, aes(x=Type, y=Fiber_g)) + geom_boxplot() + theme_dark()
+p9 <- ggplot(choc, aes(x=Type, y=Sugars_g)) + geom_boxplot() + theme_dark()
+p10 <- ggplot(choc, aes(x=Type, y=Protein_g)) + geom_boxplot() + theme_dark()
+              
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, nrow = 2, ncol = 5)
+```
+
 (e) Compute two sample t-tests for each of the variables. Which variable most distinguishes the chocolate type? (This may need to be done using the base R function.)
+```{r}
 
+t1 <- t.test(Calories ~ Type, data = choc, var.equal = TRUE)
+t2 <- t.test(CalFat ~ Type, data = choc, var.equal = TRUE)
+t3 <- t.test(TotFat_g ~ Type, data = choc, var.equal = TRUE)
+t4 <- t.test(SatFat_g ~ Type, data = choc, var.equal = TRUE)
+t5 <- t.test(Chol_mg ~ Type, data = choc, var.equal = TRUE)
+t6 <- t.test(Na_mg ~ Type, data = choc, var.equal = TRUE)
+t7 <- t.test(Carbs_g ~ Type, data = choc, var.equal = TRUE)
+t8 <- t.test(Fiber_g ~ Type, data = choc, var.equal = TRUE)
+t9 <- t.test(Sugars_g ~ Type, data = choc, var.equal = TRUE)
+t10 <- t.test(Protein_g ~ Type, data = choc, var.equal = TRUE)
+library(broom)
+library(purrr)
+result <- map_df(list(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10), tidy)
+print(result)
 
+```
+Sodium is the nutrient of which levels best differentiate dark and milk chocolates
