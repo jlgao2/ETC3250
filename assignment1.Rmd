@@ -72,6 +72,8 @@ ts_aug$.resid <- ts_aug$y - ts_aug$.fitted
 tr_mse <- sum((tr_aug$y-tr_aug$.fitted)^2)/length(ts_aug$.fitted)
 ts_mse <- sum(ts_aug$.resid^2)/length(ts_aug$.resid)
 
+print(c('Training MSE:',tr_mse,'Test MSE:', ts_mse))
+
 # Plot the data, true model and fitted model
 ggplot(df, aes(x=x, y=y)) + geom_point() +
   geom_line(aes(y=true)) + geom_point(data=fit1, aes(x=x, y=.fitted), colour="orange")
@@ -80,35 +82,41 @@ ggplot(df, aes(x=x, y=y)) + geom_point() +
 c. Now examine the behaviour of the training and test MSE, for a `loess` fit. 
     i. (1)Look up the `loess` model fit, and write a paragraph explaining how this fitting procedure works. In particular, explain what the `span` argument does. Add a (hand) sketch illustrating the method.
 
+Loess stands for local regression, and it works by binning your observations into categories based on a dependant variable, this means that different regions can have different relationships. The span argument controls how small the bins are, the smaller they are the more flexible the data is in that it can model more complex relationships. The larger the span/bins are the smoother the fitted data is. 
+
+###insert sketch
+
+
 
     ii. (1)Compute the training and test MSE for a range of `span` values, 2, 1, 0.5, 0.3, 0.2, 0.1, 0.05. Plot the training and test MSE against the span parameter. For each model, also make a plot of the data and fitted model. Include just the plot of the fit of the model that you think best captures the relationship between x and y.)
 ```{r}
-span <- c(2, 1, ???)
+span <- c(2, 1, 0.5, 0.3, 0.2, 0.1, 0.05)
 tr_mse2 <- NULL
 ts_mse2 <- NULL
 
 # Fit a loess model and compute MSEs
-for (i in 1:length(???)) {
-  fit2 <- loess(???, data=tr, span=span[i])
-  tr_aug2 <- augment(???, tr)
-  ts_aug2 <- augment(???, newdata=ts)
-  ts_aug2$.resid <- ts_aug2$y - ???
-  trm <- sum(???^2)/length(???)
-  tsm <- sum(???^2, na.rm=TRUE)/
-    length(???)
-  tr_mse2 <- c(tr_mse2, ???)
-  ts_mse2 <- c(ts_mse2, ???)
+for (i in 1:length(span)) 
+  {
+  fit2 <- loess(y~x, data=tr, span=span[i])
+  tr_aug2 <- augment(fit2, tr)
+  ts_aug2 <- augment(fit2, newdata=ts)
+  ts_aug2$.resid <- ts_aug2$y - ts_aug2$.fitted
+  trm <- sum((tr_aug2$y-tr_aug2$.fitted)^2)/length(tr_aug2)
+  tsm <- sum(ts_aug2$.resid^2, na.rm=TRUE)/
+    length(tr_aug2)
+  tr_mse2 <- c(tr_mse2, trm)
+  ts_mse2 <- c(ts_mse2, tsm)
 }
 
-mse_df <- tibble(span, `train MSE`=???, `test MSE`=???)
+mse_df <- tibble(span, `train MSE`=tr_mse2, `test MSE`=ts_mse2)
 mse_df <- mse_df %>% 
-  pivot_longer(cols = ???, names_to = "type", values_to="mse")
-ggplot(mse_df, aes(x=???, y=???, colour=???)) + 
-  geom_???() +
-  geom_???() + 
-  scale_x_reverse() +
-  ylab("MSE") +
-  scale_colour_brewer("", palette="Dark2")
+  pivot_longer(cols = -span, names_to = "type", values_to="mse")
+ggplot(mse_df, aes(x=span, y=mse, colour=pink)) + 
+ # geom_???() +
+  #geom_???() + 
+  #cale_x_reverse() +
+  ##ylab("MSE") +
+  #scale_colour_brewer("", palette="Dark2")
 ```
 
     iii. (2)Write a paragraph explaining the effect of increasing the flexibility of the fit has on the training and test MSE. Indicate what you think is the optimal span value for this data. Make a plot of this optimal fit.
