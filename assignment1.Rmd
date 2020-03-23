@@ -5,10 +5,10 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, 
+knitr::opts_chunk$set(echo = TRUE, 
                       warning = FALSE, 
                       message = FALSE,
-                      eval = FALSE)
+                      eval = TRUE)
 ```
 
 ## Instructions
@@ -111,21 +111,21 @@ for (i in 1:length(span))
 mse_df <- tibble(span, `train MSE`=tr_mse2, `test MSE`=ts_mse2)
 mse_df <- mse_df %>% 
   pivot_longer(cols = -span, names_to = "type", values_to="mse")
-ggplot(mse_df, aes(x=span, y=mse, colour=pink)) + 
- # geom_???() +
-  #geom_???() + 
-  #cale_x_reverse() +
-  ##ylab("MSE") +
-  #scale_colour_brewer("", palette="Dark2")
+ggplot(mse_df, aes(x=span, y=mse, colour=type)) + 
+  geom_col(position="dodge") +
+  geom_line() +
+  scale_x_reverse() +
+  ylab("MSE") +
+  scale_colour_brewer("", palette="Dark2")
 ```
 
     iii. (2)Write a paragraph explaining the effect of increasing the flexibility of the fit has on the training and test MSE. Indicate what you think is the optimal span value for this data. Make a plot of this optimal fit.
 
 ```{r}
-fit_all <- loess(???, data=df, span=???)
-df_all <- augment(fit_all, ???)
-ggplot(df, aes(x=???, y=???)) + geom_???() +
-  geom_???(data=df_all, aes(x=???, y=???), colour="orange")
+fit_all <- loess(y~x, data=df, span=0.1)
+df_all <- augment(fit_all)
+ggplot(df, aes(x=x, y=y)) + geom_point() +
+  geom_line(data=df_all, aes(x, y=.fitted), size = 2, colour="orange")
 ```
 
 d. (2)Make a sketch indicating observed data, the true model, fitted model, and indicate what the bias, variance and MSE refer to. Remember that to understand bias and variance, you need to think about taking multiple (and actually all possible) samples. Your illustration would have predictor ($x$) on the horizontal axis and response on the vertical axis. Represent and observed value with a dot, and use curves for fitted models and the true model.
@@ -139,38 +139,40 @@ library(tidyverse)
 library(lubridate)
 library(broom)
 library(tsibble)
-covid_jh <- ???("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+covid_jh <- read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
 covid_jh_oz <- covid_jh %>%
-  filter(`Country/Region` == ???) %>%
-  pivot_longer(cols=???, names_to = "date") %>%
-  mutate(date = ???(date)) %>%
-  group_by(???) %>%
-  summarise(count = ???) %>%
-  mutate(dif = ???(count))
+  filter(`Country/Region` == "Australia") %>%
+  pivot_longer(cols = ends_with("20"), names_to = "date") %>%
+  mutate(date = mdy(date)) %>%
+  group_by(date) %>%
+  summarise(count = sum(value)) %>%
+  mutate(dif = c(NA, diff(count)))
 covid_jh_oz %>%
-  ggplot(aes(x=???, y=???)) + 
-    geom_???() +
-    geom_???(se=FALSE) +
-    ylab("count") + xlab("")
+  ggplot(aes(x=date, y=dif)) + 
+  geom_col() +
+  geom_smooth(se=FALSE) +
+  ylab("New Cases Incidence") + xlab("date")
 ```
 
 b. (3)Fit an appropriate linear model, using `glm` to the data. (Hint: ) Make a summary of the model fit, write down the model equation and a plot of the data with the model overlaid. Compute the ratio of the deviance relative to the null deviance. What does this say about the model fit? Is it a good summary of the variation in counts?
 
 ```{r}
-covid_jh_oz_lm <- glm(???, data=covid_jh_oz, family=???)
+covid_jh_oz_lm <- glm(dif~date, data=covid_jh_oz, family=gaussian)
 covid_jh_oz_lm
-covid_jh_oz <-  augment(covid_jh_oz_lm, ???) %>%
-  mutate(.fitted = ???)
+covid_jh_oz <-  augment(covid_jh_oz_lm) #%>%
+#  mutate(.fitted =)
 covid_jh_oz %>%
-  ggplot(aes(x=???, y=???)) + 
-  geom_???() +
-  geom_???(se=FALSE) +
-  geom_line(aes(y=???), color="red") +
-  xlab("") + ylab("daily count") 
+  ggplot(aes(x=date, y=dif)) +
+  geom_col() +
+  geom_smooth(se=FALSE) +
+  geom_line(aes(y=.fitted), color="red") +
+  xlab("date") + ylab("daily count") 
 ```
 
 d. (1)Would the `glm` model be considered a flexible or inflexible model? 
+  Inflexible
 e. (1)Use your model to predict the count for Mar 31.
 ```{r}
-predict(covid_jh_oz_lm, newdata=???, type=???)
+predict(covid_jh_oz_lm, newdata=data.frame(date = dmy("31/3/20")))
 ```
+There will be 
