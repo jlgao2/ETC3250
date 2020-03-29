@@ -1,7 +1,9 @@
 ---
 title: "ETC3250/5250 Assignment 1"
-date: "DUE: Friday Mar 27, 5pm"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+date: 'DUE: Friday Mar 27, 5pm'
 ---
 
 ```{r setup, include=FALSE}
@@ -137,7 +139,6 @@ d. (2)Make a sketch indicating observed data, the true model, fitted model, and 
 a. (2)The data shows cumulative counts by date for many countries. Extract the data for Australia. It is currently multiple rows corresponding to counts in different states. Pivot the data into long tidy form, and convert the text date into a date variable. Difference the days, so that you have the incidence for each day. Make a bar chart of incidence by date. Add a loess smooth to the plot.
 
 ```{r}
-library(tidyverse)
 library(lubridate)
 library(broom)
 library(tsibble)
