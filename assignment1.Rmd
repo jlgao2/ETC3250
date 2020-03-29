@@ -84,7 +84,7 @@ c. Now examine the behaviour of the training and test MSE, for a `loess` fit.
 
 Loess stands for local regression, and it works by binning your observations into categories based on a dependant variable, this means that different regions can have different relationships. The span argument controls how small the bins are, the smaller they are the more flexible the data is in that it can model more complex relationships. The larger the span/bins are the smoother the fitted data is. 
 
-###insert sketch
+![here is the sketch](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/CCI_000002.png)
 
 
 
@@ -129,6 +129,8 @@ ggplot(df, aes(x=x, y=y)) + geom_point() +
 ```
 
 d. (2)Make a sketch indicating observed data, the true model, fitted model, and indicate what the bias, variance and MSE refer to. Remember that to understand bias and variance, you need to think about taking multiple (and actually all possible) samples. Your illustration would have predictor ($x$) on the horizontal axis and response on the vertical axis. Represent and observed value with a dot, and use curves for fitted models and the true model.
+
+![here is another](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/CCI_000001.png)
 
 2. The current COVID-19 health crisis worries us all. John Hopkins University has been carefully documenting incidence, recoveries and deaths around the globe. Read the incidence data from https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv, into R.
 
