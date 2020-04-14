@@ -4,15 +4,15 @@ date: "DUE: Friday, Apr 24 5pm "
 author: Jia Lin Gao
 output: html_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=TRUE}
 knitr::opts_chunk$set(
-  echo = FALSE,
-  eval = FALSE,
-  message = FALSE,
-  warning = FALSE)
+  echo = TRUE,
+  eval = TRUE,
+  message = TRUE,
+  warning = TRUE)
 ```
 
 ## Instructions
@@ -37,6 +37,7 @@ knitr::opts_chunk$set(
 
     a. Write down the density function for a univariate normal distribution ($p=1$), with mean $\mu_k$ and variance $\sigma_k$. 
   $$f(x)=\frac{1}{\sigma_k\sqrt2\pi}e^{\frac{-1}{2}(\frac{x-\mu_k}{\sigma_k})^2}$$
+  
 
     b. Show that the quadratic discriminant rule for two groups ($K=2$), $\pi_1=\pi_2$ is equal to:
 
@@ -76,13 +77,21 @@ p <- ggplot() +
 p
 ```
     d. Write down the rule using these parameter values, and sketch the boundary corresponding to the rule on the previous plot.
+    
+    Substiture the values for $\sigma_k$ and $\mu_k$ into the below equation 
+    
+$$-\frac12 \left( \frac{1}{\sigma_1^2}- \frac{1}{\sigma_2^2} \right) {x_0^2} + \left(\frac{\mu_1}{\sigma_1^2}-\frac{\mu_2}{\sigma_2^2}\right)x_0 -\frac12 \left(\frac{\mu_1^2}{\sigma_1^2}-  \frac{\mu_2^2}{\sigma_2^2} \right)  -\log{\sigma_1}+\log{\sigma_2}>0 $$
+  
+    Use values in quadratic equation to solve
+
 ```{r}
 a = -0.5*((1/s1^2)-(1/s2^2))
 b = m1/s1^2 - m2/s2^2
-c = -0.5*(m1^2/s1^2-m2^2/s2^2)
+c = -0.5*(m1^2/s1^2-m2^2/s2^2) - log(s1) + log(s2)
 x_pos = (-b + sqrt(b^2 - 4*a*c))/(2*a)
 x_neg = (-b - sqrt(b^2 - 4*a*c))/(2*a)
 p + geom_vline(xintercept=x_pos, linetype=2)
+sprintf("QDA boundary is at %f", x_pos)
 ```
     e. If instead you had made a mistake and assumed that the two variances were equal, this would have produced a linear discrimant rule. Mark this boundary on the previous plot. Explain why and how this differs from result of the QDA rule.
 ```{r}
@@ -124,42 +133,44 @@ score_gap <- scores %>%
   pivot_wider(id_cols=CNT, names_from=test, values_from=gap)
 ```
 
+
 This block of code will compute 90% bootstrap confidence intervals for the weighted mean difference. 
 
 ```{r}
 library(boot)
+#library(plyr)
 # Compute confidence intervals
 cifn <- function(d, i) {
   x <- d[i,]
-  ci <- weighted.mean(???, w=???, na.rm=T)-
-                     weighted.mean???, w=???, na.rm=T)
+  ci <- weighted.mean(x$math[x$gender=="male"], w=x$w[x$gender=="male"], na.rm=T)-
+                     weighted.mean(x$math[x$gender=="female"], w=x$w[x$gender=="female"], na.rm=T)
   ci
 }
 bootfn <- function(d) {
-  r <- boot(d, statistic=???, R=???)
-  l <- sort(r$t)[???]
-  u <- sort(r$t)[???]
+  r <- boot(d, statistic=cifn, R=100)
+  l <- sort(r$t)[5]
+  u <- sort(r$t)[95]
   ci <- c(l, u)
   return(ci)
 }
 #student2012.sub.summary.gap.boot <- ddply(student2012.sub, .(CNT), bootfn)
-score_gap_boot <- ??? %>% 
+score_gap_boot <- scores %>% 
   split(.$CNT) %>% purrr::map(bootfn) %>% as_tibble() %>%
-  pivot_longer(cols=???, names_to=???, values_to=???) %>%
-  arrange(???) %>%
+  pivot_longer(cols=everything(), names_to="CNT", values_to="bounds" ) %>%
+  arrange(CNT) %>%
   mutate(bound=rep(c("ml","mu"), length(unique(scores$CNT)))) %>%
-  pivot_wider(names_from = ???, values_from = ???)
-score_gap <- ??? %>%
-  left_join(score_gap_boot, by=???)
+  pivot_wider(names_from = bound, values_from = bounds)
+score_gap <- score_gap %>%
+  left_join(score_gap_boot, by="CNT")
 ```
 
 This block of code will add country names, and make dotplots with confidence intervals for the math gap for each country. 
 
 ```{r gap_dots, fig.height=8, fig.width=6, out.width="60%"}
-score_gap <- ??? %>%
-  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
-  rename(name = Name)
-score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
+# <- score_gap %>%
+#  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
+#  rename(name = Name)
+#score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
 
 library(forcats)
 score_gap <- score_gap %>% 
@@ -175,15 +186,18 @@ score_gap <- score_gap %>%
                        "Viet Nam"="Vietnam")) 
 
 
-ggplot(data=???, aes(x=fct_reorder(name, ???), y=???)) +
-  geom_???(yintercept=???, colour="red") +
-  geom_???() + 
-  geom_???(aes(ymin=???, ymax=???), width=0) +
+
+ggplot(data=score_gap, aes(x=fct_reorder(name, math), y=math)) +
+  geom_hline(yintercept=0, colour="red") +
+  geom_point() + 
+  geom_errorbar(aes(ymin=ml, ymax=mu), width=0) +
   coord_flip() + 
   xlab("") + ylab("Gender gap") + ylim(c(-35, 35))
 ```
 
 Write a paragraph explaining what you learn about the math gap across the countries tested in 2015. 
+
+    The math
 
 3. (9pts)A cross-rate is *an exchange rate between two currencies computed by reference to a third currency, usually the US dollar.*
 The data file `rates_Nov19_Mar20.csv` was extracted from https://openexchangerates.org using the code below (my API key has been hidden from you):
@@ -216,13 +230,30 @@ a. (1)What's the data? Make a plot of the Australian dollar against date. Explai
 
 ```{r}
 library(tidyverse)
-rates <- read_csv(???)
-ggplot(rates, aes(x=???, y=???)) + geom_???()
+library(lubridate)
+rates <- read_csv("data/rates_Nov19_Mar20.csv")
+ggplot(rates, aes(x=ymd(date), y=AUD)) + geom_line()
 ```
 
 b. (1)You are going to work with these currencies: AUD, CAD, CHF, CNY, EUR, GBP, INR, JPY, KRW, MXN, NZD, RUB, SEK, SGD, ZAR. List the names of the countries and currency name that these codes refer to. Secondary question: why is the USD a constant 1 in this data. 
 
-*The US is the base rate, against which all other currencies are compared.*
+    *The US is the base rate, against which all other currencies are compared.*
+    
+    AUD - Australia - Australian Dollar
+    CAD - Canada - Canadian Dollar
+    CHF - The Swiss Confederation -Swiss Franc
+    CNY,- THe People's Republic of China - Ren Min Bi
+    EUR - The European Union - Euro  
+    GBP - United Kingdom - Pound Sterling
+    INR - India - Indian Rupee 
+    JPY - Japan - Japanese Yen
+    KRW - Republic of Korea - Korean Won
+    MXN - Mexico - Mexican Peso
+    NZD - New Zealand - New Zealand Dollar 
+    RUB - Russia - Russian Ruble
+    SEK - Sweden -  Swedish Krona
+    SGD - Singapore - Singapore Dollar
+    ZAR - South Africa - South African Rand
 
 c. (2)The goal of the principal component analysis is to examine the relative movement of this subset of currencies, especially since coronavirus emerged until the end of March. PCA is used to summarise the volatility (variance) in the currencies, relative to each other. To do this you need to: 
 
@@ -230,24 +261,25 @@ c. (2)The goal of the principal component analysis is to examine the relative mo
     - Flip the sigm so that high means the currency strengthened against the USD, and low means that it weakened. Its easier to explain trends, if you don't need to talk with double-negatives.
     - Make a plot of all the currencies to check the result.
 
-```{r}
+```{r echo=TRUE, message=TRUE, warning=TRUE, paged.print=TRUE}
 library(viridisLite)
 library(plotly)
+library(lubridate)
 rates_sub <- rates %>%
-  select(???) %>%
-  mutate_if(???, function(x) -1*(x-mean(x))/sd(x))
-rates_sub_long <- ??? %>% 
-  pivot_longer(cols=???, names_to=???, values_to=???) 
-ggplot(rates_sub_long, aes(x=???, y=???, colour=???)) + geom_???() +
+  select(c(date, USD, AUD, CAD, CHF, CNY, EUR, GBP, INR, JPY, KRW, MXN, NZD, RUB, SEK, SGD, ZAR)) %>%
+  mutate_if(is.numeric, function(x) -1*(x-mean(x))/sd(x))
+  rates_sub_long <- rates_sub %>% 
+  pivot_longer(cols=-date, names_to="currency", values_to="std_r8s") 
+  ggplot(rates_sub_long, aes(x=date, y=std_r8s, colour=currency)) + geom_line() +
   scale_colour_viridis_d("")
-# ggplotly() Make an interactive plot to browse the currencies
+  ggplotly() #Make an interactive plot to browse the currencies
 ```
 
 d. (5)Conduct a principal component analysis on the subset of currencies. You need to work from a wide format of the data, where dates are in the columns, and currencies are in the rows. Normally, PCA operate on standardised variables but for this data, you need to NOT standardise each date. Think about why this is best.
 
     - Why is this data considered to be high-dimensional?
     - Make a scree plot to summarise the variance explained by cumulative principal components. How much of the total variation do two PCs explain?
-    - Plot the first two principal components. Write a summary of what you learn about the similarity and difference between the curreencies. 
+    - Plot the first two principal components. Write a summary of what you learn about the similarity and difference between the currencies. 
     - Plot the loadings for PC1. Add a base line set at $1/\sqrt{15}$. Why use this as a guide? What time frame generated a big movement (or divergence) in the currencies? Which currencies strengthened relative to the USD in that period? What happened to the Australian dollar? Answer these questions in a paragraph, written in your own words.
     - Do the same analysis for PC2. What time frame was there another movement of currencies? Which currencies primarily strengthened, and which weakened during this period?
     - Finish with a paragraph summarising what variability the principal components analysis is summarising. What dimension reduction is being done?
@@ -255,32 +287,33 @@ d. (5)Conduct a principal component analysis on the subset of currencies. You ne
     
 ```{r}
 library(ggrepel)
-rates_sub_wide <- ??? %>%
-  pivot_wider(id_cols=???, names_from=???, values_from = ???)
-rates_pca <- prcomp(???, scale=FALSE)
-screeplot(???, type="l")
-summary(rates_pca)
-rates_pca$x %>% 
+#library(ggfortify)
+rates_sub_wide <- rates_sub_long %>%
+  pivot_wider(id_cols=-date, names_from=date, values_from=std_r8s)
+  rates_pca <- prcomp(rates_sub_wide[2:16,2:153], scale=FALSE)
+screeplot(rates_pca, type="l")
+  summary(rates_pca)
+  rates_pca$x %>% 
   as_tibble() %>% 
-  mutate(currency = ???) %>%
-  ggplot(aes(x=???, y=???)) + 
-    geom_???() +
-    geom_???(aes(x=???, y=???, label=???)) + 
-  theme(aspect.ratio=1)
-rates_pc_loadings <- as_tibble(???) %>%
-  mutate(date = ???, 
-         indx = 1:nrow(???),
+  mutate("currency" = as_vector(rates_sub_wide[2:16,1])) %>%
+  ggplot(aes(x=PC1, y=PC2)) + 
+   geom_point() +
+   geom_text(aes(x=PC1, y=PC2, label=currency)) + 
+   theme(aspect.ratio=1)
+rates_pc_loadings <- as_tibble(rates_pca$rotation) %>%
+  mutate(date = colnames(rates_sub_wide[2:153]), 
+         indx = 1:nrow(rates_pca$rotation),
          ymin=rep(0, nrow(rates_pca$rotation)))
 ggplot(rates_pc_loadings) + 
-  geom_hline(yintercept=c(???,
-                          ???)), colour="red") + 
-  geom_???(aes(x=???, ymin=???, ymax=???)) +
-  geom_???(aes(x=???, y=???))
+  geom_hline(yintercept=c(1/sqrt(15),
+                          -1/sqrt(15)), colour="red") + 
+  geom_linerange(aes(x=indx, ymin=0, ymax=PC1)) +
+  geom_point(aes(x=indx, y=PC1))
 ggplot(rates_pc_loadings) + 
-  geom_hline(yintercept=c(???,
-                          ???)), colour="red") + 
-  geom_???(aes(x=???, ymin=???, ymax=???)) +
-  geom_???(aes(x=???, y=???))
+  geom_hline(yintercept=c(1/sqrt(15),
+                          -1/sqrt(15)), colour="red") + 
+  geom_linerange(aes(x=indx, ymin=0, ymax=PC2)) +
+  geom_point(aes(x=indx, y=PC2))
 ```
 
 4. (2pts)What's wrong with the following statement?
