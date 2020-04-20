@@ -214,8 +214,12 @@ ggplot(data=score_gap, aes(x=fct_reorder(name, math), y=math)) +
 
 The math gender gap varies widely in between countries with an unweighted average gap of 4.8 points, however girls outperform boys by 30 points in reading and 0.5 points in science. The gender gap in maths appears to be wider in Europe and South America in favour of boys and wider in favour of girls in Middle East and the Caribbean. 
     
+<<<<<<< HEAD
 ## 3. 
 A cross-rate is *an exchange rate between two currencies computed by reference to a third currency, usually the US dollar.*
+=======
+3. (9pts)A cross-rate is *an exchange rate between two currencies computed by reference to a third currency, usually the US dollar.*
+>>>>>>> d83ddfa7bc3205b7c2110ade00a95ff099cd5b10
 The data file `rates_Nov19_Mar20.csv` was extracted from https://openexchangerates.org [3] using the code below (my API key has been hidden from you):
 
 ```{r eval=FALSE}
@@ -303,11 +307,17 @@ The first 2 PCs explain roughly 55% of the variation in the data.
     - Plot the first two principal components. 
     Write a summary of what you learn about the similarity and difference between the currencies.
       
+
 !['alttext'](https://github.com/jlgao2/ETC3250/raw/master/images/a2q3d1.PNG)
       
 The majority of this basket appear to behave similarly as a group marked as cluster 1 on PC1 and PC2 with the notable exceptions of CNY, JPY, EUR and CHF. JPY and EUR are somewhat similar in PC1 and PC2, while the CNY and CHF stands somewhat alone. On PC1 the CHF and the JPY are somewhat similar in having a strong positive PC1 component. 
 
 !['alttext'](https://github.com/jlgao2/ETC3250/raw/master/images/a2q3d2.PNG)
+
+The majority of this basket appear to behave similarly as a group marked as cluster 1 on PC1 and PC2 with the notable exceptions of CNY, JPY, EUR and CHF. JPY and EUR are somewhat similar in PC1 and PC2, while the CNY and CHF stands somewhat alone. On PC1 the CHF and the JPY are somewhat similar in having a strong positive PC1 component. 
+
+![](https://github.com/jlgao2/ETC3250/raw/master/images/a2q3d2.PNG)
+
       
 Examination on the plotly interactive plot using a currency like the CAD to represent the main cluster reveals that the these JPY and CHF spiked dramatically in early march relative to the basket, which is why they are similar in PC1. 
       
