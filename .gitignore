@@ -1,4 +1,5 @@
-$ cat .Rproj.user
+.Rproj.user/
 $ cat .Rhistory
 $ cat .RData
 $ cat .Ruserdata
+*.[oa]
