@@ -1,0 +1,40 @@
+---
+title: "COVID-19 - Lockdown Effacy"
+author: "Jia Lin Gao"
+date: "23/03/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Lets have a look at COVID 19 
+
+## data collection
+
+## lockdown times
+
+italy - mar 8
+hubei - jan 23
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(broom)
+library(tsibble)
+covid_jh <- read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv")
+covid_jh_oz <- covid_jh %>%
+  filter(`Country/Region` == "Australia") %>%
+  pivot_longer(cols = ends_with("20"), names_to = "date") %>%
+  mutate(date = mdy(date)) %>%
+  group_by(date) %>%
+  summarise(count = value) %>%
+  mutate(dif = c(NA, diff(count)))
+covid_jh_oz %>%
+  ggplot(aes(x=date, y=dif)) + 
+  geom_col() +
+  geom_smooth(se=FALSE) +
+  ylab("New Cases Incidence") + xlab("date")
+```
+

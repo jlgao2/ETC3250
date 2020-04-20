@@ -1,0 +1,46 @@
+---
+title: "ACCC Application"
+author: "Jia Lin Gao"
+date: "20/03/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(seasonal)
+accc_data = read_csv('data/accc_data.csv')
+
+rvr <- accc_data  %>% mutate(Date = dmy(Date)) %>% arrange(Date) %>% seas()
+
+
+ac_plot <- ggplot(rvr, aes(x=Date, y=price, fill = as.factor(Qtr))) + 
+  geom_col()  + 
+  scale_fill_brewer(palette="Spectral") +
+  xlab("Quarter Ending") + 
+  ylab("Average daily weighted imbalance price ($ per gigajoule)") +
+  labs(fill = "Quarter")
+
+ggsave('ac_plot.png', width = 12, height = 9)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

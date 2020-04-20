@@ -1,4 +1,4 @@
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
+$ cat .Rproj.user
+$ cat .Rhistory
+$ cat .RData
+$ cat .Ruserdata

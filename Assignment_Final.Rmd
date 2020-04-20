@@ -1,0 +1,231 @@
+---
+title: "ETC3520 Group Assignment 1"
+author: "Jia Lin Gao (25982990), Yang Wang (28463293),Alicia Lam - leader (29676088), Tarushi Hondhe-Munige (28768361)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE,
+                      eval = TRUE)
+```
+
+```{r}
+# Load libraries
+library(caret)
+library(magrittr)
+library(broom)
+library(tidyverse)
+library(lubridate)
+library(tsibble)
+library(scales)
+```
+
+## Exercises
+
+###Question 1. 
+This question explores bias-variance trade-off. Read in the simulated data `cuddly_koalas.rds`. This data is generated using the following function:
+
+$$ y = -4x + 6x^2 - 100sin(x) + \varepsilon, ~~\text{where}~~x\in [-10, 20], ~~\varepsilon\sim N(0, 50^2)$$
+
+#### 1.a. 
+Make a plot of the data, overlaying the true model.
+
+```{r}
+# Read data
+df <- readRDS("data/cuddly_koalas.rds")
+glimpse(df)
+
+# Compute the true model values
+df <- df %>% mutate(true=6*x^2-4*x-100*sin(x))
+
+# Plot data and true model 
+ggplot(df, aes(x=x, y=y)) + geom_point() +
+  geom_line(aes(y=true), colour="blue")
+```
+
+#### 1.b.
+Break the data into a $2/3$ training and a $1/3$ test set. (Hint: You can use the function `createDataPartition` from the `caret` package.) Fit a linear model, using the training set. Compute the training MSE and test MSE. Overlay the linear model fit on a plot of the data and true model.
+
+```{r}
+# Create training and test sets
+set.seed(20200318)
+tr_indx <- createDataPartition(df$y, p=0.66)$Resample1
+tr <- df[tr_indx,]
+ts <- df[-tr_indx,]
+
+# Fit linear model
+fit1 <- lm(y~x, data=tr)
+tr_aug <- augment(fit1, tr)
+ts_aug <- augment(fit1, newdata=ts)
+ts_aug$.resid <- ts_aug$y - ts_aug$.fitted
+tr_mse <- sum((tr_aug$y-tr_aug$.fitted)^2)/length(ts_aug$.fitted)
+ts_mse <- sum(ts_aug$.resid^2)/length(ts_aug$.resid)
+
+#print computed MSE
+print(c('Training MSE:',tr_mse,'Test MSE:', ts_mse))
+
+# Plot the data, true model and fitted model
+ggplot(df, aes(x=x, y=y)) + geom_point() +
+  geom_line(aes(y=true)) + geom_point(data=fit1, aes(x=x, y=.fitted), colour="orange")
+```
+
+#### 1.c. 
+Now examine the behaviour of the training and test MSE, for a `loess` fit. 
+#### 1.c.i.
+Look up the `loess` model fit, and write a paragraph explaining how this fitting procedure works. In particular, explain what the `span` argument does. Add a (hand) sketch illustrating the method.
+
+    -Local regression, which is more commonly referred to as Loess, is a non-parametric method that uses least squares regression for particular ranges. The loess function can be used on the training X values in order to smooth the data. 
+    -The span argument, which ranges between 0 to 1, controls the smoothness of the data. The rule of thumb is, the larger the span value, the smoother the fitted data will be, while the smaller the span value, the more flexible the model will be[1][2]. 
+
+![Fig. 1.c.i.](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/CCI_000002.png)
+
+
+#### 1.c.ii. 
+Compute the training and test MSE for a range of `span` values, 2, 1, 0.5, 0.3, 0.2, 0.1, 0.05. Plot the training and test MSE against the span parameter. For each model, also make a plot of the data and fitted model. Include just the plot of the fit of the model that you think best captures the relationship between x and y.)
+
+```{r}
+span <- c(2, 1, 0.5, 0.3, 0.2, 0.1, 0.05)
+tr_mse2 <- NULL
+ts_mse2 <- NULL
+pltList <- list() #make list of plots 
+
+# function declaration for fixing scale on loess question
+
+reverselog_trans <- function(base = exp(1)) { #credit to Brian Diggs on StackOverflow
+    trans <- function(x) -log(x, base)
+    inv <- function(x) base^(-x)
+    trans_new(paste0("reverselog-", format(base)), trans, inv, 
+              log_breaks(base = base), 
+              domain = c(1e-100, Inf))
+}
+
+# Fit a loess model and compute MSEs
+for (i in 1:length(span)) 
+  {
+  # fit local regression
+  fit2 <- loess(y~x, data=tr, span=span[i])
+  tr_aug2 <- augment(fit2, tr)
+  ts_aug2 <- augment(fit2, newdata=ts)
+  ts_aug2$.resid <- ts_aug2$y - ts_aug2$.fitted
+  trm <- sum((tr_aug2$y-tr_aug2$.fitted)^2)/length(tr_aug2)
+  tsm <- sum(ts_aug2$.resid^2, na.rm=TRUE)/
+    length(tr_aug2)
+  tr_mse2 <- c(tr_mse2, trm)
+  ts_mse2 <- c(ts_mse2, tsm)
+  #generate plots
+  p <- ggplot(data = tr_aug2) + 
+    geom_point(mapping = aes(x=x, y=y)) +
+    geom_line(mapping = aes(x=x, y=.fitted), colour="orange", size = 1.2) +
+    geom_line(aes(x, y=true))
+  #save plots in list
+  pltList[[i]] = p  
+}
+
+mse_df <- tibble(span, `train MSE`=tr_mse2, `test MSE`=ts_mse2)
+mse_df <- mse_df %>% 
+  pivot_longer(cols = -span, names_to = "type", values_to="mse")
+ggplot(mse_df, aes(x=span, y=mse, colour=type)) + 
+  geom_col(position="dodge") +
+  geom_line() +
+  scale_x_continuous(trans=reverselog_trans(10)) +
+  ylab("MSE") +
+  scale_colour_brewer("", palette="Dark2")
+```
+
+The plots for the other span widths are saved in the array pltList and can be accessed by calling 'pltList[[i]]'
+
+#### 1.c.iii 
+Write a paragraph explaining the effect of increasing the flexibility of the fit has on the training and test MSE. Indicate what you think is the optimal span value for this data. Make a plot of this optimal fit.
+
+    When the flexibility of the fit increases, the training and test MSE will decrease until an inflection point has been reached. When this point is reached, it showcases that the model is over fitting the data. After this point the training MSE will decrease and the test MSE will increase, taking into account the observations recorded rather than a representation of the true population.
+    
+    In this dataset, the optimum span value would be 0.1, which is the point of which the both the training and test MSEs are at its combined lowest.This is the point where it also keeps the 'sin' feature of this model.[3][4]
+
+```{r}
+fit_all <- loess(y~x, data=df, span=0.1)
+df_all <- augment(fit_all)
+ggplot(df, aes(x=x, y=y)) + geom_point() +
+  geom_line(data=df_all, aes(x, y=.fitted), size = 1.2, colour="orange")
+```
+
+
+#### 1.d. 
+Make a sketch indicating observed data, the true model, fitted model, and indicate what the bias, variance and MSE refer to. Remember that to understand bias and variance, you need to think about taking multiple (and actually all possible) samples. Your illustration would have predictor ($x$) on the horizontal axis and response on the vertical axis. Represent and observed value with a dot, and use curves for fitted models and the true model.
+
+![Fig 1.d.](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/CCI_000001.png)
+
+### Question 2.
+The current COVID-19 health crisis worries us all. John Hopkins University[5] has been carefully documenting incidence, recoveries and deaths around the globe. Read the incidence data from https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv, into R.
+
+#### 2.a. 
+The data shows cumulative counts by date for many countries. Extract the data for Australia. It is currently multiple rows corresponding to counts in different states. Pivot the data into long tidy form, and convert the text date into a date variable. Difference the days, so that you have the incidence for each day. Make a bar chart of incidence by date. Add a loess smooth to the plot.
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(broom)
+library(tsibble)
+covid_jh <- read_csv("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+covid_jh_oz <- covid_jh %>%
+  filter(`Country/Region` == "Australia") %>%
+  pivot_longer(cols=ends_with("20"), names_to = "date") %>%
+  mutate(date = mdy(date)) %>%
+  group_by(date) %>%
+  summarise(count = sum(value)) %>%
+  mutate(dif = c(NA, diff(count)))
+covid_jh_oz %>%
+  ggplot(aes(x=date, y=dif)) + 
+    geom_col() +
+    geom_smooth(se=FALSE) +
+    ylab("New Daily Cases of COVID-19") + xlab("Date")
+```
+
+#### 2.b. 
+Fit an appropriate linear model, using `glm` to the data. (Hint: ) Make a summary of the model fit, write down the model equation and a plot of the data with the model overlaid. Compute the ratio of the deviance relative to the null deviance. What does this say about the model fit? Is it a good summary of the variation in counts?
+
+```{r}
+covid_jh_oz_lm <- glm(dif~date, data=covid_jh_oz, family=gaussian)
+covid_jh_oz_lm
+covid_jh_oz <-  augment(covid_jh_oz_lm) #%>%
+#  mutate(.fitted =)
+covid_jh_oz %>%
+  ggplot(aes(x=date, y=dif)) +
+  geom_col() +
+  geom_smooth(se=FALSE) +
+  geom_line(aes(y=.fitted), color="red") +
+  xlab("Date") + ylab("Daily Count")
+
+sprintf("The ratio of Residual Deviance/Null Deviance is %f", covid_jh_oz_lm$deviance/covid_jh_oz_lm$null.deviance)
+```
+
+
+#### 2.c. 
+Would the `glm` model be considered a flexible or inflexible model? 
+
+    Generally, linear models are considered inflexible compared to other models and as the glm model is linear, it would be regarded as an inflexible model. 
+
+
+#### 2.d. 
+Use your model to predict the count for Apr 6
+```{r}
+apr6 <- predict(covid_jh_oz_lm, newdata=data.frame(date = dmy("6/4/20")))
+sprintf("The GLM model predicts %f cases on April 6th using the data[2] from %s", apr6, Sys.Date())
+```
+
+### References:
+
+[1] G. James, D. Witten, T. Hastie, and R. Tibshirani, An introduction to statistical learning: with applications in R. New York: Springer, 2017. 
+
+[2] http://r-statistics.co/Loess-Regression-With-R.html
+
+[3] W. S. Cleveland, E. Grosse and W. M. Shyu (1992) Local regression models. Chapter 8 of Statistical Models in S eds J.M. Chambers and T.J. Hastie, Wadsworth & Brooks/Cole.
+
+[4] https://machinelearningmastery.com/learning-curves-for-diagnosing-machine-learning-model-performance/
+
+[5] Johns Hopkins CSSE, “Coronavirus COVID-19 Global Cases by Johns Hopkins CSSE - World,” Github. [Online]. Available: https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv. [Accessed: 30-Mar-2020]. 
+
+
+
+

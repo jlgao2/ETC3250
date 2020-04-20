@@ -67,7 +67,7 @@ df <- tibble(x, y)
 
 x <- seq(-20, 20, 0.2)
 dx <- c(dnorm(x, m1, s1), dnorm(x, m2, s2))
-y <- factor(c(rep(0, length(x)), rep(1, length(x))))
+y <- factor(c(rep(1, length(x)), rep(2, length(x))))
 df_pop <- tibble(x=c(x,x), dx, y)
 p <- ggplot() + 
   geom_rug(data=df, aes(x=x, y=0, colour=factor(y)), alpha=0.7) +
@@ -94,6 +94,9 @@ p + geom_vline(xintercept=x_pos, linetype=2)
 sprintf("QDA boundary is at %f", x_pos)
 ```
     e. If instead you had made a mistake and assumed that the two variances were equal, this would have produced a linear discrimant rule. Mark this boundary on the previous plot. Explain why and how this differs from result of the QDA rule.
+      
+      Using the linear discriminant rule instead of the quadratic discriminant rule in this example would result in worse classification performance as the discriminant rule only solves if the variance/covariance matrix is equal. If the assumption is false then it won't work. We can see in the example that clearing the QDA demarcates a better boundary as it accounts for different variances between categories in this univariate case. The samples here are overassigned to class 0 with LDA because it doesn't take into account
+    
 ```{r}
 p + geom_vline(xintercept=x_pos, linetype=2) +
   geom_vline(xintercept=(m1+m2)/2, linetype=3, colour="red")
@@ -167,10 +170,10 @@ score_gap <- score_gap %>%
 This block of code will add country names, and make dotplots with confidence intervals for the math gap for each country. 
 
 ```{r gap_dots, fig.height=8, fig.width=6, out.width="60%"}
-# <- score_gap %>%
-#  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
-#  rename(name = Name)
-#score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
+ # score_gap <- score_gap %>%
+ #  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
+ #  rename(name = Name)
+ # score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
 
 library(forcats)
 score_gap <- score_gap %>% 
@@ -185,7 +188,8 @@ score_gap <- score_gap %>%
                        "United Kingdom"="UK",
                        "Viet Nam"="Vietnam")) 
 
-
+glimpse(score_gap)
+summary(score_gap)
 
 ggplot(data=score_gap, aes(x=fct_reorder(name, math), y=math)) +
   geom_hline(yintercept=0, colour="red") +
@@ -197,8 +201,8 @@ ggplot(data=score_gap, aes(x=fct_reorder(name, math), y=math)) +
 
 Write a paragraph explaining what you learn about the math gap across the countries tested in 2015. 
 
-    The math
-
+    The math gender gap varies widely in between countries with an unweighted average gap of 4.8 points, however girls outperform boys by 30 points in reading and 0.5 points in science. The gender gap in maths appears to be wider in Europe and South America in favour of boys and wider in favour of girls in Middle East and the Caribbean. 
+    
 3. (9pts)A cross-rate is *an exchange rate between two currencies computed by reference to a third currency, usually the US dollar.*
 The data file `rates_Nov19_Mar20.csv` was extracted from https://openexchangerates.org using the code below (my API key has been hidden from you):
 
@@ -226,7 +230,7 @@ write_csv(ru, path="data/rates_new.csv")
 
 a. (1)What's the data? Make a plot of the Australian dollar against date. Explain how the Australian dollar has changed relative to the US dollar over the 5 month period.
 
-*Over the 5 month period the Australian dollar has weakened against the US dollar, with a big  decline in mid-March as the coronavirus impact affected the world.*
+Over the 5 month period the Australian dollar has weakened against the US dollar, with a big  decline in mid-March as the coronavirus impact affected the world. but australia in particular this time because of more interest rate cuts which encourage outflow of capital. There has also been supression of demand due to the early impact of coronavirus in china. The bushfires also reduced australian output. 
 
 ```{r}
 library(tidyverse)
@@ -278,12 +282,31 @@ rates_sub <- rates %>%
 d. (5)Conduct a principal component analysis on the subset of currencies. You need to work from a wide format of the data, where dates are in the columns, and currencies are in the rows. Normally, PCA operate on standardised variables but for this data, you need to NOT standardise each date. Think about why this is best.
 
     - Why is this data considered to be high-dimensional?
+      This data is high dimensional because in it's wide form the variables are the dates (each of which comprise a dimension),  and each observation is a currency and there are a whole lot more dates than currencies. We want to see the relationship between the currencies, to do this with PCA, we have to make the currencies the observations and the dates the variables 
+    
     - Make a scree plot to summarise the variance explained by cumulative principal components. How much of the total variation do two PCs explain?
-    - Plot the first two principal components. Write a summary of what you learn about the similarity and difference between the currencies. 
-    - Plot the loadings for PC1. Add a base line set at $1/\sqrt{15}$. Why use this as a guide? What time frame generated a big movement (or divergence) in the currencies? Which currencies strengthened relative to the USD in that period? What happened to the Australian dollar? Answer these questions in a paragraph, written in your own words.
+      The first 2 PCs explain roughly 55% of the variation in the data
+    
+    - Plot the first two principal components. 
+    Write a summary of what you learn about the similarity and difference between the currencies.
+      
+      
+      The majority of this basket appear to behave similarly as a group as per the most important PC with the notable exceptions of CNY, JPY, EUR and CHF. JPY and EUR are similar in PC1 and PC2, CNY and CHF appear to be relatively different. Opposing movements of the CNY and JPY in PC2 are seen in jan and feb inverse correlated movement on theplotly
+      to be more volitile with some countercyclical movements. Particularly CHF not dropping much due to the 'rona and the CNY having a bit of 
+    
+    - Plot the loadings for PC1. Add a base line set at $1/\sqrt{15}$. 
+    - Why use this as a guide? 
+    - What time frame generated a big movement (or divergence) in the currencies? 
+    - Which currencies strengthened relative to the USD in that period? 
+    - What happened to the Australian dollar? 
+    - Answer these questions in a paragraph, written in your own words.
+    
+    The loadings There was a big movement in PC1 started at around index 115 which corresponds to the end of Feburary. when the Rona really kicked in in the US and flattened out in Italy and Spain. The EUR and CHF really strengthened around 
+    
     - Do the same analysis for PC2. What time frame was there another movement of currencies? Which currencies primarily strengthened, and which weakened during this period?
+    EUR, JPY, 
     - Finish with a paragraph summarising what variability the principal components analysis is summarising. What dimension reduction is being done?
-
+    The variability in between currencies is being summarised in this PCA. 
     
 ```{r}
 library(ggrepel)
@@ -305,13 +328,13 @@ rates_pc_loadings <- as_tibble(rates_pca$rotation) %>%
          indx = 1:nrow(rates_pca$rotation),
          ymin=rep(0, nrow(rates_pca$rotation)))
 ggplot(rates_pc_loadings) + 
-  geom_hline(yintercept=c(1/sqrt(15),
-                          -1/sqrt(15)), colour="red") + 
+  geom_hline(yintercept=c(1/sqrt(150),
+                          -1/sqrt(150)), colour="red") + 
   geom_linerange(aes(x=indx, ymin=0, ymax=PC1)) +
   geom_point(aes(x=indx, y=PC1))
 ggplot(rates_pc_loadings) + 
-  geom_hline(yintercept=c(1/sqrt(15),
-                          -1/sqrt(15)), colour="red") + 
+  geom_hline(yintercept=c(1/sqrt(150),
+                          -1/sqrt(150)), colour="red") + 
   geom_linerange(aes(x=indx, ymin=0, ymax=PC2)) +
   geom_point(aes(x=indx, y=PC2))
 ```
@@ -319,6 +342,8 @@ ggplot(rates_pc_loadings) +
 4. (2pts)What's wrong with the following statement?
 
 **Principle component analysis is a dimension reduction technique**.
+
+    Principle component analysis is both a dimension reduction technique but it is also a useful tool as applied here to understand the relationship between endogenous variables. We can use use the tool to more easily visualise higher dimension data. 
 
 ### Plots for the different parts will look something like these
 

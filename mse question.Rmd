@@ -1,0 +1,75 @@
+---
+title: "mse question"
+author: "Travis Barr"
+date: "05/04/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ISLR)
+library(GGally)
+library(broom)
+library(caret)
+library(kableExtra)
+```
+
+
+## Set partition
+```{r}
+set.seed(13)
+test.sample <- createDataPartition(Auto$mpg, p=(0.5))$Resample1
+train <- Auto[test.sample,]
+test <- Auto[-test.sample,] 
+```
+
+
+## loop through models with different levels of polynomials
+```{r}
+tr_mse <- NULL
+ts_mse <- NULL
+
+for(i in 1:10) {
+    fit <- lm(mpg ~ poly(horsepower, i), data = train)
+    tr_aug <- augment(fit, train)
+    ts_aug <- augment(fit, newdata = test)
+    ts_aug$.resid <- ts_aug$mpg - ts_aug$.fitted
+    trm <- sum(tr_aug$.resid^2)/length(tr_aug$.resid)
+    tsm <- sum(ts_aug$.resid^2)/length(ts_aug$.resid)
+    tr_mse <- c(tr_mse, trm)
+    ts_mse <- c(ts_mse, tsm)
+}
+```
+
+
+## create mse tables
+```{r}
+mse_table <- tibble(`Train MSE` = tr_mse, `Test MSE` = ts_mse)
+
+mse_table %>%
+     kable(format.args = list(big.mark = ","), digits = 2) %>%
+    kable_styling(
+        bootstrap_options = "basic", full_width = F, position = "left"
+        )
+```
+
+
+## plot mse vs poly level.
+```{r}
+mse.df <- mse_table %>% 
+    rowid_to_column('poly')%>%
+    pivot_longer(cols = c( `Train MSE`, `Test MSE`), names_to = 'type', values_to="mse")
+ 
+ggplot(mse.df, aes(x=poly, y=mse, colour=type)) + 
+  geom_point() +
+  geom_line() + 
+  ggtitle("MSE vs poly") +
+  ylab("MSE") +
+    theme_minimal() +
+    scale_colour_brewer("", palette="Dark2") +
+    theme(plot.title = element_text(hjust = 0.5), axis.title.y = element_text(margin = margin(t = 0, r = 15, b = 0, l = 0)))
+```
