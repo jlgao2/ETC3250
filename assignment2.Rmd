@@ -53,6 +53,7 @@ $$\Rightarrow-\frac{1}{2}\frac{(\sigma_2^2-\sigma_1^2)x_0^2+2(\mu_1\sigma_2^2-\m
 $$-\frac12 \left( \frac{1}{\sigma_1^2}- \frac{1}{\sigma_2^2} \right) {x_0^2} + \left(\frac{\mu_1}{\sigma_1^2}-\frac{\mu_2}{\sigma_2^2}\right)x_0 -\frac12 \left(\frac{\mu_1^2}{\sigma_1^2}-  \frac{\mu_2^2}{\sigma_2^2} \right)  -\log{\sigma_1}+\log{\sigma_2}>0 ~~~\textit{Q.E.D.}$$
 
     c. Suppose $\mu_1=4, \mu_2=-5, \sigma_1=0.5, \sigma_2=5$ simulate a set of 50 observations from each population. Make a plot of the population model, and add these samples as a rug plot on the horizontal axis. (See the lecture notes for a similar plot and code for linear discriminant analysis.)
+    
 ```{r fig.width=6, fig.height=4, out.width="80%"}
 library(tidyverse)
 set.seed("24042020")
@@ -95,7 +96,7 @@ sprintf("QDA boundary is at %f", x_pos)
 ```
     e. If instead you had made a mistake and assumed that the two variances were equal, this would have produced a linear discrimant rule. Mark this boundary on the previous plot. Explain why and how this differs from result of the QDA rule.
       
-      Using the linear discriminant rule instead of the quadratic discriminant rule in this example would result in worse classification performance as the discriminant rule only solves if the variance/covariance matrix is equal. If the assumption is false then it won't work. We can see in the example that clearing the QDA demarcates a better boundary as it accounts for different variances between categories in this univariate case. The samples here are overassigned to class 0 with LDA because it doesn't take into account
+  Using the linear discriminant rule instead of the quadratic discriminant rule in this example would result in worse classification performance as the discriminant rule only solves if the variance/covariance matrix is equal. If the assumption is false then it won't work. We can see in the example that clearing the QDA demarcates a better boundary as it accounts for different variances between categories in this univariate case. The samples here are overassigned to class 1 with LDA due to the lower variance of class 1.  
     
 ```{r}
 p + geom_vline(xintercept=x_pos, linetype=2) +
@@ -105,7 +106,7 @@ p + geom_vline(xintercept=x_pos, linetype=2) +
 
 *A significant gender gap in maths performance in favour of male students has returned, despite closing in 2015* [Natassia Chrysanthos, Sydney Morning Herald](https://www.smh.com.au/national/nsw/urgent-need-to-address-maths-performance-as-nsw-slumps-in-international-test-20191203-p53ge2.html)
 
-Last December, the 2018 [OECD PISA results](http://www.oecd.org/pisa/data/) were released. These are standardised test scores in math, reading and science, of 15 year olds across the globe. It led to a flurry of articles in the news about slipping standards of Australian students. If you also browsed the news of other countries (including New Zealand, Indonesia, Finland), you would find that many had similarly woeful stories. The above headline focuses on the math gap. To explore this, we will compute bootstrap confidence intervals for the difference between weighted averages for boys and girls in each country. The data is from the 2015 results.  
+Last December, the 2018 [OECD PISA results](http://www.oecd.org/pisa/data/) were released. These are standardised test scores in math, reading and science, of 15 year olds across the globe. It led to a flurry of articles in the news about slipping standards of Australian students. If you also browsed the news of other countries (including New Zealand, Indonesia, Finland), you would find that many had similarly woeful stories. The above headline focuses on the math gap. To explore this, we will compute bootstrap confidence intervals for the difference between weighted averages for boys and girls in each country. The data is from the 2015 results.[4] 
 
 The code block below will compute the difference between weighted averages for boys and girls in each country. A weighted average is often used with survey data, to reflect how the sampling was done relative to the population characteristics. The weighted average will typically better reflect the population mean. 
 
@@ -170,10 +171,10 @@ score_gap <- score_gap %>%
 This block of code will add country names, and make dotplots with confidence intervals for the math gap for each country. 
 
 ```{r gap_dots, fig.height=8, fig.width=6, out.width="60%"}
- # score_gap <- score_gap %>%
- #  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
- #  rename(name = Name)
- # score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
+ score_gap <- score_gap %>%
+  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
+  rename(name = Name)
+ score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
 
 library(forcats)
 score_gap <- score_gap %>% 
@@ -199,12 +200,12 @@ ggplot(data=score_gap, aes(x=fct_reorder(name, math), y=math)) +
   xlab("") + ylab("Gender gap") + ylim(c(-35, 35))
 ```
 
-Write a paragraph explaining what you learn about the math gap across the countries tested in 2015. 
+    Write a paragraph explaining what you learn about the math gap across the countries tested in 2015. 
 
-    The math gender gap varies widely in between countries with an unweighted average gap of 4.8 points, however girls outperform boys by 30 points in reading and 0.5 points in science. The gender gap in maths appears to be wider in Europe and South America in favour of boys and wider in favour of girls in Middle East and the Caribbean. 
+The math gender gap varies widely in between countries with an unweighted average gap of 4.8 points, however girls outperform boys by 30 points in reading and 0.5 points in science. The gender gap in maths appears to be wider in Europe and South America in favour of boys and wider in favour of girls in Middle East and the Caribbean. 
     
 3. (9pts)A cross-rate is *an exchange rate between two currencies computed by reference to a third currency, usually the US dollar.*
-The data file `rates_Nov19_Mar20.csv` was extracted from https://openexchangerates.org using the code below (my API key has been hidden from you):
+The data file `rates_Nov19_Mar20.csv` was extracted from https://openexchangerates.org [3] using the code below (my API key has been hidden from you):
 
 ```{r eval=FALSE}
 # WARNING: YOU DON'T NEED TO RUN THIS CODE!!!!!
@@ -228,9 +229,9 @@ rownames(ru) <- ru$date
 write_csv(ru, path="data/rates_new.csv")
 ```
 
-a. (1)What's the data? Make a plot of the Australian dollar against date. Explain how the Australian dollar has changed relative to the US dollar over the 5 month period.
+a. (1) What's the data? Make a plot of the Australian dollar against date. Explain how the Australian dollar has changed relative to the US dollar over the 5 month period.
 
-Over the 5 month period the Australian dollar has weakened against the US dollar, with a big  decline in mid-March as the coronavirus impact affected the world. but australia in particular this time because of more interest rate cuts which encourage outflow of capital. There has also been supression of demand due to the early impact of coronavirus in china. The bushfires also reduced australian output. 
+Over the 5 month period the Australian dollar has weakened against the US dollar, with the decline rapidly accelerating in early March coinciding with when the coronavirus started affected the world economy to a greater extent. AUD in particular weakened relative to the USD this time because of more interest rate cuts which encourage outflow of capital to places with higher potential returns like the US. There earlier decline in the value of the AUD has been caused by supression of demand due to the early impact of coronavirus in china. The bushfires also reduced australian output and supply of exports. [2] 
 
 ```{r}
 library(tidyverse)
@@ -243,24 +244,23 @@ b. (1)You are going to work with these currencies: AUD, CAD, CHF, CNY, EUR, GBP,
 
     *The US is the base rate, against which all other currencies are compared.*
     
-    AUD - Australia - Australian Dollar
-    CAD - Canada - Canadian Dollar
-    CHF - The Swiss Confederation -Swiss Franc
-    CNY,- THe People's Republic of China - Ren Min Bi
-    EUR - The European Union - Euro  
-    GBP - United Kingdom - Pound Sterling
-    INR - India - Indian Rupee 
-    JPY - Japan - Japanese Yen
-    KRW - Republic of Korea - Korean Won
-    MXN - Mexico - Mexican Peso
-    NZD - New Zealand - New Zealand Dollar 
-    RUB - Russia - Russian Ruble
-    SEK - Sweden -  Swedish Krona
-    SGD - Singapore - Singapore Dollar
-    ZAR - South Africa - South African Rand
+  AUD - Australia - Australian Dollar
+  CAD - Canada - Canadian Dollar
+  CHF - The Swiss Confederation -Swiss Franc
+  CNY,- THe People's Republic of China - Ren Min Bi
+  EUR - The European Union - Euro  
+  GBP - United Kingdom - Pound Sterling
+  INR - India - Indian Rupee 
+  JPY - Japan - Japanese Yen
+  KRW - Republic of Korea - Korean Won
+  MXN - Mexico - Mexican Peso
+  NZD - New Zealand - New Zealand Dollar 
+  RUB - Russia - Russian Ruble
+  SEK - Sweden -  Swedish Krona
+  SGD - Singapore - Singapore Dollar
+  ZAR - South Africa - South African Rand
 
 c. (2)The goal of the principal component analysis is to examine the relative movement of this subset of currencies, especially since coronavirus emerged until the end of March. PCA is used to summarise the volatility (variance) in the currencies, relative to each other. To do this you need to: 
-
     - Standardise all the currencies, individually. The resulting values will have a mean 0 and standard deviation equal to 1.
     - Flip the sigm so that high means the currency strengthened against the USD, and low means that it weakened. Its easier to explain trends, if you don't need to talk with double-negatives.
     - Make a plot of all the currencies to check the result.
@@ -282,18 +282,25 @@ rates_sub <- rates %>%
 d. (5)Conduct a principal component analysis on the subset of currencies. You need to work from a wide format of the data, where dates are in the columns, and currencies are in the rows. Normally, PCA operate on standardised variables but for this data, you need to NOT standardise each date. Think about why this is best.
 
     - Why is this data considered to be high-dimensional?
-      This data is high dimensional because in it's wide form the variables are the dates (each of which comprise a dimension),  and each observation is a currency and there are a whole lot more dates than currencies. We want to see the relationship between the currencies, to do this with PCA, we have to make the currencies the observations and the dates the variables 
+
+This data is high dimensional because in it's wide form the variables are the dates (each of which comprise a dimension),  and each observation is a currency and there are a whole lot more dates than currencies. We want to see the relationship between the currencies, to do this with PCA, we have to make the currencies the observations and the dates the variables[1]. 
     
     - Make a scree plot to summarise the variance explained by cumulative principal components. How much of the total variation do two PCs explain?
-      The first 2 PCs explain roughly 55% of the variation in the data
+
+The first 2 PCs explain roughly 55% of the variation in the data.
     
     - Plot the first two principal components. 
     Write a summary of what you learn about the similarity and difference between the currencies.
       
+![](https://github.com/jlgao2/ETC3250/raw/master/images/a2q3d1.PNG)
       
-      The majority of this basket appear to behave similarly as a group as per the most important PC with the notable exceptions of CNY, JPY, EUR and CHF. JPY and EUR are similar in PC1 and PC2, CNY and CHF appear to be relatively different. Opposing movements of the CNY and JPY in PC2 are seen in jan and feb inverse correlated movement on theplotly
-      to be more volitile with some countercyclical movements. Particularly CHF not dropping much due to the 'rona and the CNY having a bit of 
-    
+The majority of this basket appear to behave similarly as a group marked as cluster 1 on PC1 and PC2 with the notable exceptions of CNY, JPY, EUR and CHF. JPY and EUR are somewhat similar in PC1 and PC2, while the CNY and CHF stands somewhat alone. On PC1 the CHF and the JPY are somewhat similar in having a strong positive PC1 component. 
+
+![](https://github.com/jlgao2/ETC3250/raw/master/images/a2q3d2.PNG)
+      
+Examination on the plotly interactive plot using a currency like the CAD to represent the main cluster reveals that the these JPY and CHF spiked dramatically in early march relative to the basket, which is why they are similar in PC1. 
+      
+  
     - Plot the loadings for PC1. Add a base line set at $1/\sqrt{15}$. 
     - Why use this as a guide? 
     - What time frame generated a big movement (or divergence) in the currencies? 
@@ -301,12 +308,15 @@ d. (5)Conduct a principal component analysis on the subset of currencies. You ne
     - What happened to the Australian dollar? 
     - Answer these questions in a paragraph, written in your own words.
     
-    The loadings There was a big movement in PC1 started at around index 115 which corresponds to the end of Feburary. when the Rona really kicked in in the US and flattened out in Italy and Spain. The EUR and CHF really strengthened around 
+The baselines are plotted on the loadings as the PCA formula states that loadings are $\displaystyle\sum_{j=1}^p \phi^2_{j1} = 1$, therefore $\pm \frac{1}{\sqrt150}$ represents the root mean square of the loadings as $p = 150$, this is used as a guide as it represents an 'average' of what the loadings should be for $p$ variables. There is a big movement in PC1 which started at around index 115 which corresponds to the end of Feburary. In this period the EUR, JPY, CHF, and CNY strengthed relative to the US dollar, whereas the AUD, which is slightly negative in PC1 decrease in value relative to the USD during the same time period. 
     
     - Do the same analysis for PC2. What time frame was there another movement of currencies? Which currencies primarily strengthened, and which weakened during this period?
-    EUR, JPY, 
+
+For PC2 there was movement of currencies around index 70, and highly oscillatory behaviour starting around index 120. The outliers that are high in magnitude either direction of PC2 - CNY and CHF in the negative - increasing with negative loadings of PC2 vs EUR and JPY in the positive - increasing with positive loadings of PC2 shows inverse correlation between groups in those time periods.
+
     - Finish with a paragraph summarising what variability the principal components analysis is summarising. What dimension reduction is being done?
-    The variability in between currencies is being summarised in this PCA. 
+    
+The variability that PCA is summarising the variance between dates for each currency. We are reducing the date variables to a set of principle components. 
     
 ```{r}
 library(ggrepel)
@@ -343,15 +353,11 @@ ggplot(rates_pc_loadings) +
 
 **Principle component analysis is a dimension reduction technique**.
 
-    Principle component analysis is both a dimension reduction technique but it is also a useful tool as applied here to understand the relationship between endogenous variables. We can use use the tool to more easily visualise higher dimension data. 
+Principle component analysis is both a dimension reduction technique but it is also a useful tool as applied here to understand the relationship between endogenous variables. We can use use the tool to more easily visualise higher dimension data. [1]
 
-### Plots for the different parts will look something like these
-
-![](assgn2_plot1.png)
-
-![](assgn2_plot2.png)
-
-![](assgn2_plot3.png)
-
-![](assgn2_plot4.png)
+## Works Cited
+[1]G. James, D. Witten, T. Hastie, and R. Tibshirani, An Introduction to Statistical Learning: with Applications in R. New York: Springer-Verlag, 2013.
+[2]Richardson. T, ‘Australian dollar plummets to 11-year low’, Australian Financial Review, Sydney, Mar. 02, 2020.
+[3]Open Exchange Rates, Open Exchange Rates. JSON API, 2020.
+[4]OECD, ‘2018 Database - PISA’, Organisation for Economic Co-operation and Development. https://www.oecd.org/pisa/data/2018database/#d.en.516012 (accessed Apr. 20, 2020).
 
