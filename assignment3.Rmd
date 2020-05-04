@@ -1,0 +1,231 @@
+---
+title: "ETC3250/5250 Assignment 3"
+date: "DUE: Friday, May 8 5pm"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  eval = FALSE,
+  message = FALSE,
+  warning = FALSE)
+```
+
+## Instructions
+
+- Assignment needs to be turned in as Rmarkdown, and as html, to moodle. That is, all the files that are needed to compile your report to be submitted.
+- You need to list your team members on the report. For each of the four assignments, one team member needs to be nominated as the leader, and is responsible for coordinating the efforts of other team members, and submitting the assignment. 
+- It is strongly recommended that you individually complete the assignment, and then compare your answers and explanations with your team mates. Each student will have the opportunity to report on other team member's efforts on the assignment, and if a member does not substantially contribute to the team submission they may get a reduced mark, or even a zero mark.
+- R code should be hidden in the final report, unless it is specifically requested.
+- Original work is expected. Any material used from external sources needs to be acknowledged. 
+- There is a smaller skeleton of R code (with `???`) this time in the `Rmd` file. You will need  to  write more of your own code from scratch this time. The labs and lecture notes have examples for moost of the code you need.
+
+## Marks
+
+- Total mark will be out or 25
+- 3 points will be reserved for readability, and appropriate citing of external sources 
+- 2 points will be reserved for reproducibility, that the report can be re-generated from the submitted Rmarkdown. 
+- Accuracy and completeness of answers, and clarity of explanations will be the basis for the remaining 20 points. 
+
+
+```{r eval=FALSE}
+library(tidyverse)
+library(wesanderson)
+library(caret)
+library(GGally)
+library(tourr)
+library(RColorBrewer)
+library(plotly)
+library(MASS)
+library(rpart)
+library(mltools)
+```
+```{r}
+choc <- read_csv("data/chocolates.csv")
+choc <- choc %>% mutate(Type = fct_rev(as.factor(Type)))
+```
+## Exercises
+
+1. *About the data*: The chocolates data was compiled by students in a previous class of Prof Cook, by collecting nutrition information on the chocolates as listed on their internet sites. All numbers were normalised to be equivalent to a 100g serving. Units of measurement are listed in the variable name.
+
+  a. Use the tour, with type of chocolate mapped to colour, and write a paragraph on whether the two types of chocolate differ on the nutritional variables. 
+```{r eval=FALSE}
+X11()
+pal <- wes_palette(n=3, name = "IsleofDogs2")
+col <- pal[as.numeric(choc$Type)]
+animate_xy(choc[,5:14], axes="bottomleft", col=col)
+```
+    b. Make a parallel coordinate plot of the chocolates, coloured by type, with the variables sorted by how well they separate the groups. Maybe the "uniminmax" scaling might work best for this data. Write a paragraph explaining how the types of chocolates differ in nutritional characteristics.`
+```{r eval=FALSE}
+p <- ggparcoord(choc, columns = 5:14, groupColumn = 'Type', order='allClass', scale='uniminmax') +
+  scale_color_manual(values = wes_palette(n=3, name="IsleofDogs2")) + ylab("") #+ geom_smooth()
+ggplotly(p)
+```
+    c. Identify one dark chocolate that is masquerading as dark, that is, nutritionally looks more like a milk chocolate. Explain your answer. 
+    
+Using manual inspection instead of the allclass from ggparcoord function i got clearer separation using sodium and fiber levels
+```{r eval=FALSE}
+ggplot(choc, aes(x=Na_mg, y=Fiber_g, colour=Type, label=paste(MFR, Name))) + geom_point() +
+  scale_color_manual(values = wes_palette(n=3, name="IsleofDogs2")) + theme(aspect.ratio=1)
+ggplotly()
+```
+
+
+```{r eval=FALSE}
+
+ggplot(choc, aes(x=SatFat_g, y=Protein_g, colour=Type, label=paste(MFR, Name))) + geom_point() +
+  scale_color_manual(values = wes_palette(n=3, name="IsleofDogs2")) + theme(aspect.ratio=1)
+ggplotly()
+```
+
+
+
+    d. Fit a linear discriminant analysis model, using equal prior probability for each group.
+```{r}
+
+choc_lda <- lda(Type~. - Name - MFR - Country, data=choc, prior=c(1/2,1/2))
+choc_prd <- choc %>% mutate(pType = predict(choc_lda, choc)$class)
+table(choc_prd$Type, choc_prd$pType)
+```
+
+    e. Write down the LDA rule. Make it clear which type of chocolate is class 1 and class 2 relative to the formula in the notes.
+    
+The LDA rule is 
+
+Classes: Milk = 1, Dark = 2
+
+Assign observation to class 1 if 
+
+$$ x_0'\Sigma^{-1}(\mu_1-\mu_2)>\frac{1}{2}(\mu_1+\mu_2)'\Sigma^{-1}(\mu_1-\mu_2)\,|\,\pi_1=\pi_2\,\&\,\Sigma\,$$ is common for all k
+
+
+```{r}
+choc_lda
+```
+
+
+2. This question is about decision trees. Here is a sample data set to work with:
+```{r}
+set.seed <- 20200508
+d <- data.frame(id=c(1:8), x=sort(sample(-5:20, 8)), cl=c("A", "A", "A", "B", "B", "A", "B", "B"))
+d
+```
+    a. Write down the formulae for the impurity metric, Gini, for a two group problem. Show that the Gini function has its highest value at 0.5. Explain why a value of 0.5 leads to the worst possible split. 
+  
+ $$G = \sum_{k =1}^K \hat{p}_{mk}(1 - \hat{p}_{mk})$$ 
+ 
+ $$G = \hat{p_{m1}}(1-\hat{p}_{m1}) + \hat{p_{m2}}(1-\hat{p}_{m2}) $$
+ in a 2 group problem
+ 
+ $$ \hat{p}_{m2} = 1-\hat{p}_{m1} $$
+ expand and simplify
+ 
+ $$ G = 2\hat{p_{m1}}(1-\hat{p}_{m1})$$
+when $\hat{p}_{m1} = \hat{p}_{m2} = 0.5$
+
+```{r}
+p <- seq(0.01, 0.99, 0.01)
+y <- 2*p*(1-p)
+df <- tibble(p, y)
+ggplot(df, aes(x=p, y=y)) + geom_line() + ylab("Gini")
+```
+
+Intuitively this makes sense, when the split results in an even mix of classes, the classifer is at it's least powerful, therefore the loss should be maximised to reflect this
+
+
+ 
+  b. Write an R function to compute the impurity measure. The input should be data frame containing a vector of numeric values, and a vector of the associated classes. 
+
+```{r}    
+my_gini <- function(df, split, xvar, classvar){
+  #save list of classes to a vector
+  classes <- unique(df[[classvar]])
+  
+  ##sort by num value
+  df = df[order(df[[xvar]]),]
+  
+  n_row = as.numeric(nrow(df))
+  
+  ## identify break point
+  for(i in 1:n_row) { 
+    if (split > df[[xvar]][i]) {
+      idx = i
+        }
+      }
+
+  ##calculate pmk for split region 1    
+  a <- df[1:idx, ] 
+  prA = as.numeric(sum(a[[classvar]] == classes[1]))
+  pr1a <- sum(prA)/nrow(a)
+  pr1  <- pr1a*(1-pr1a)
+  
+  ##calculate pmk for split region 2  
+  b <- df[(idx+1):n_row,]
+  prB = as.numeric(sum(b[[classvar]] == classes[1]))
+  pr2a <- sum(prB)/nrow(b)
+  pr2  <- pr2a*(1-pr2a)
+  
+  gini = pr1 + pr2
+  
+return(gini)
+}
+```
+    c. Use your function to compute the Gini impurity measure for every possible split of the sample data. 
+
+```{r}
+result = list()
+split_vector <- seq(from=min(d$x)+0.5, to=max(d$x)-0.5, by=.5)
+len = length(split_vector)
+
+for (idx in 1:len){
+  split = split_vector[idx]
+  split_i <- split
+  gini_i  <- my_gini(d, split, "x", "cl")
+  result[[idx]] <- c(split_i, gini_i)
+}
+
+result <- data.frame(matrix(unlist(result), nrow=length(result), byrow=T))
+names(result)[1] <- "Split"
+names(result)[2] <- "Gini"
+```
+
+    d. Make a plot of your splits and the impurity measure. What partition of the data would yield the best split?
+
+```{r}
+ggplot(data = result, mapping =aes(x=Split, y=Gini)) + geom_line()
+```    
+    
+    e. Fit a classification tree to the chocolates data. Print the tree model.
+```{r}
+choc_rp <- rpart(Type ~ Calories + CalFat + TotFat_g + SatFat_g + Chol_mg + Na_mg + Carbs_g + Fiber_g + Sugars_g + Protein_g, data=choc)
+print(choc_rp)
+```    
+    f. Compute Gini impurity measure for all possible splits on the Fiber variable in the chocolates data. Plot this against the splits. Explain where the best split is.
+    
+```{r}
+
+result_fiber = list()
+fiber_vector <- seq(from=min(choc$Fiber_g)+0.5, to=max(choc$Fiber_g)-0.5, by=.01 )
+len = length(fiber_vector)
+
+for (idx in 1:len){
+  split = fiber_vector[idx]
+  split_i <- split
+  gini_i  <- my_gini(choc, split, "Fiber_g", "Type")
+  result_fiber[[idx]] <- c(split_i, gini_i)
+}
+result_fiber <- data.frame(matrix(unlist(result_fiber), nrow=length(result), byrow=T))
+names(result_fiber)[1] <- "Split"
+names(result_fiber)[2] <- "Gini"
+ggplot(data = result_fiber, mapping =aes(x=Split, y=Gini)) + geom_line()
+
+```
+    g. Compute Gini impurity measure for all possible splits on all of the other nutrition variables. Plot all of these values against the split, all 10 plots. Are there other possible candidates for splitting, that are almost as good as the one chosen by the tree? Explain yourself.
+    
+    
+
+3. For each of the simulated data sets provided, using the tour, parallel coordinate plot, scatterplot matrix or any other technique you like, determine the main structure in the data: how many groups there are, whether there are any outliers, overall shape. Write a paragraph on what you find in the data and your approach.
+
