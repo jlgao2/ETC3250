@@ -1,6 +1,7 @@
 ---
 title: "ETC3250/5250 Assignment 3"
 date: "DUE: Friday, May 8 5pm"
+code_monkey: "George Gao"
 output: html_document
 editor_options: 
   chunk_output_type: inline
@@ -9,7 +10,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = FALSE,
-  eval = FALSE,
+  eval = TRUE,
   message = FALSE,
   warning = FALSE)
 ```
@@ -31,7 +32,8 @@ knitr::opts_chunk$set(
 - Accuracy and completeness of answers, and clarity of explanations will be the basis for the remaining 20 points. 
 
 
-```{r eval=FALSE}
+```{r}
+#import libraries
 library(tidyverse)
 library(wesanderson)
 library(caret)
@@ -42,8 +44,11 @@ library(plotly)
 library(MASS)
 library(rpart)
 library(mltools)
+library(psych)
 ```
+
 ```{r}
+#import choc data
 choc <- read_csv("data/chocolates.csv")
 choc <- choc %>% mutate(Type = fct_rev(as.factor(Type)))
 ```
@@ -52,38 +57,33 @@ choc <- choc %>% mutate(Type = fct_rev(as.factor(Type)))
 1. *About the data*: The chocolates data was compiled by students in a previous class of Prof Cook, by collecting nutrition information on the chocolates as listed on their internet sites. All numbers were normalised to be equivalent to a 100g serving. Units of measurement are listed in the variable name.
 
   a. Use the tour, with type of chocolate mapped to colour, and write a paragraph on whether the two types of chocolate differ on the nutritional variables. 
+  
+  Using the tour we find that the milk and dark chocolates diverge on most nutritional variables and converge on others. Furthermore there is overlap on all the variables betweek milk and white chocolates. 
+
 ```{r eval=FALSE}
 X11()
 pal <- wes_palette(n=3, name = "IsleofDogs2")
 col <- pal[as.numeric(choc$Type)]
 animate_xy(choc[,5:14], axes="bottomleft", col=col)
 ```
-    b. Make a parallel coordinate plot of the chocolates, coloured by type, with the variables sorted by how well they separate the groups. Maybe the "uniminmax" scaling might work best for this data. Write a paragraph explaining how the types of chocolates differ in nutritional characteristics.`
+    b. Make a parallel coordinate plot of the chocolates, coloured by type, with the variables sorted by how well they separate the groups. Maybe the "uniminmax" scaling might work best for this data. Write a paragraph explaining how the types of chocolates differ in nutritional characteristics.
+    
+  It does appear that the types of chocolates generally differ on many variables. The level of sodium and carbs including sugar, and cholestrol are higher in milk chocolates, higher sugar content may be due to the fact that milk chocolates are sweetened more, and the sodium could be due to the addition of milk, which contains a certain level of sodium. Levels of fat and fiber are higher in dark chocolates, due to the increased volume of cocoa mass which has a high fiber content, and increased volume of cocoa butter, which is high in both saturated fat and total fat[1]. 
 ```{r eval=FALSE}
 p <- ggparcoord(choc, columns = 5:14, groupColumn = 'Type', order='allClass', scale='uniminmax') +
   scale_color_manual(values = wes_palette(n=3, name="IsleofDogs2")) + ylab("") #+ geom_smooth()
 ggplotly(p)
 ```
     c. Identify one dark chocolate that is masquerading as dark, that is, nutritionally looks more like a milk chocolate. Explain your answer. 
-    
-Using manual inspection instead of the allclass from ggparcoord function i got clearer separation using sodium and fiber levels
+
+Using the variables of sodium and fiber which provides one plane with clear separation, we find that "Mars Dark Chocolate Bar" sits squarely in the what appears to be the milk chocolate region from visual inspection. We can confirm our guess in questions below.  
 ```{r eval=FALSE}
 ggplot(choc, aes(x=Na_mg, y=Fiber_g, colour=Type, label=paste(MFR, Name))) + geom_point() +
   scale_color_manual(values = wes_palette(n=3, name="IsleofDogs2")) + theme(aspect.ratio=1)
 ggplotly()
 ```
 
-
-```{r eval=FALSE}
-
-ggplot(choc, aes(x=SatFat_g, y=Protein_g, colour=Type, label=paste(MFR, Name))) + geom_point() +
-  scale_color_manual(values = wes_palette(n=3, name="IsleofDogs2")) + theme(aspect.ratio=1)
-ggplotly()
-```
-
-
-
-    d. Fit a linear discriminant analysis model, using equal prior probability for each group.
+  d. Fit a linear discriminant analysis model, using equal prior probability for each group.
 ```{r}
 
 choc_lda <- lda(Type~. - Name - MFR - Country, data=choc, prior=c(1/2,1/2))
@@ -91,16 +91,20 @@ choc_prd <- choc %>% mutate(pType = predict(choc_lda, choc)$class)
 table(choc_prd$Type, choc_prd$pType)
 ```
 
-    e. Write down the LDA rule. Make it clear which type of chocolate is class 1 and class 2 relative to the formula in the notes.
+  e. Write down the LDA rule. Make it clear which type of chocolate is class 1 and class 2 relative to the formula in the notes.
     
-The LDA rule is 
+The LDA model is 
+```{r}
+choc_lda
+```
+
+From which we find the LDA rule: 
 
 Classes: Milk = 1, Dark = 2
 
 Assign observation to class 1 if 
 
-$$ x_0'\Sigma^{-1}(\mu_1-\mu_2)>\frac{1}{2}(\mu_1+\mu_2)'\Sigma^{-1}(\mu_1-\mu_2)\,|\,\pi_1=\pi_2\,\&\,\Sigma\,$$ is common for all k
-
+$$ x_0'\Sigma^{-1}(\mu_1-\mu_2)>\frac{1}{2}(\mu_1+\mu_2)'\Sigma^{-1}(\mu_1-\mu_2)\,|\,\pi_1=\pi_2\,where,\Sigma\,$$ is common for all k
 
 ```{r}
 choc_lda
@@ -115,10 +119,11 @@ d
 ```
     a. Write down the formulae for the impurity metric, Gini, for a two group problem. Show that the Gini function has its highest value at 0.5. Explain why a value of 0.5 leads to the worst possible split. 
   
- $$G = \sum_{k =1}^K \hat{p}_{mk}(1 - \hat{p}_{mk})$$ 
- 
- $$G = \hat{p_{m1}}(1-\hat{p}_{m1}) + \hat{p_{m2}}(1-\hat{p}_{m2}) $$
- in a 2 group problem
+ $$G = \sum_{k =1}^K \hat{p}_{mk}(1 - \hat{p}_{mk})$$ [2]
+  
+in a 2 group problem where $K = 2$
+ $$G = \hat{p}_{m1}(1-\hat{p}_{m1}) + \hat{p}_{m2}(1-\hat{p}_{m2}) $$
+
  
  $$ \hat{p}_{m2} = 1-\hat{p}_{m1} $$
  expand and simplify
@@ -133,10 +138,8 @@ df <- tibble(p, y)
 ggplot(df, aes(x=p, y=y)) + geom_line() + ylab("Gini")
 ```
 
-Intuitively this makes sense, when the split results in an even mix of classes, the classifer is at it's least powerful, therefore the loss should be maximised to reflect this
+Intuitively this makes sense, when the Gini function is at 0.5, $\hat{p}_m$ is at 50%, which means that in the split region there is an even mix of classes and the classifer does not provide any additional infomation compared to random selection.
 
-
- 
   b. Write an R function to compute the impurity measure. The input should be data frame containing a vector of numeric values, and a vector of the associated classes. 
 
 ```{r}    
@@ -144,12 +147,13 @@ my_gini <- function(df, split, xvar, classvar){
   #save list of classes to a vector
   classes <- unique(df[[classvar]])
   
-  ##sort by num value
+  #sort by variable value
   df = df[order(df[[xvar]]),]
   
+  #extract number of rows
   n_row = as.numeric(nrow(df))
   
-  ## identify break point
+  ## identify split index
   for(i in 1:n_row) { 
     if (split > df[[xvar]][i]) {
       idx = i
@@ -174,7 +178,7 @@ return(gini)
 }
 ```
     c. Use your function to compute the Gini impurity measure for every possible split of the sample data. 
-
+    
 ```{r}
 result = list()
 split_vector <- seq(from=min(d$x)+0.5, to=max(d$x)-0.5, by=.5)
@@ -192,10 +196,12 @@ names(result)[1] <- "Split"
 names(result)[2] <- "Gini"
 ```
 
-    d. Make a plot of your splits and the impurity measure. What partition of the data would yield the best split?
+  d. Make a plot of your splits and the impurity measure. What partition of the data would yield the best split?
+
+The results show that the gini index is minimalised at $1<x<2$
 
 ```{r}
-ggplot(data = result, mapping =aes(x=Split, y=Gini)) + geom_line()
+ggplot(data = result, mapping =aes(x=Split, y=Gini)) + geom_line() 
 ```    
     
     e. Fit a classification tree to the chocolates data. Print the tree model.
@@ -208,7 +214,7 @@ print(choc_rp)
 ```{r}
 
 result_fiber = list()
-fiber_vector <- seq(from=min(choc$Fiber_g)+0.5, to=max(choc$Fiber_g)-0.5, by=.01 )
+fiber_vector <- seq(from=min(choc$Fiber_g)+0.1, to=max(choc$Fiber_g)-0.1, by=0.1 )
 len = length(fiber_vector)
 
 for (idx in 1:len){
@@ -217,15 +223,336 @@ for (idx in 1:len){
   gini_i  <- my_gini(choc, split, "Fiber_g", "Type")
   result_fiber[[idx]] <- c(split_i, gini_i)
 }
-result_fiber <- data.frame(matrix(unlist(result_fiber), nrow=length(result), byrow=T))
+result_fiber <- data.frame(matrix(unlist(result_fiber), nrow=length(result_fiber), byrow=T))
 names(result_fiber)[1] <- "Split"
 names(result_fiber)[2] <- "Gini"
 ggplot(data = result_fiber, mapping =aes(x=Split, y=Gini)) + geom_line()
-
+```
+```{r}
+group_by(choc, Type)  %>%
+  summarise(n())
 ```
     g. Compute Gini impurity measure for all possible splits on all of the other nutrition variables. Plot all of these values against the split, all 10 plots. Are there other possible candidates for splitting, that are almost as good as the one chosen by the tree? Explain yourself.
-    
-    
+```{r}  
+
+my_gini_adv <- function(df, xvar, classvar){
+  result = list()
+  x_var = df[[xvar]]
+  splits <- seq(from=min(x_var)+0.1, to=max(x_var)-0.1, by=(range(x_var)[2]-range(x_var)[1])/120)
+  len = length(splits)
+
+  for (idx in 1:len){
+    split_i <- splits[idx]
+    gini_i  <- my_gini(choc, split_i, xvar, classvar)
+    result[[idx]] <- c(split_i, gini_i)
+  }
+  result <- data.frame(matrix(unlist(result), nrow=length(result), byrow=T))
+  names(result)[1] <- "Split"
+  names(result)[2] <- "Gini"
+  return(result)
+}
+```
+```{r}
+results_list = list()
+plots_list   = list()
+for (col in 5:14){
+  results_list[[col]] = my_gini_adv(choc, col, "Type")
+  plots_list[[col]]   = ggplot(data = results_list[[col]], mapping=aes(x=Split, y=Gini)) + 
+    geom_line() +
+    ggtitle(colnames(choc)[col])
+}
+```
+```{r}
+
+plots_list[5]
+plots_list[6]
+plots_list[7]
+plots_list[8]
+plots_list[9]
+plots_list[10]
+plots_list[11]
+plots_list[12]
+plots_list[13]
+plots_list[14]
+```
 
 3. For each of the simulated data sets provided, using the tour, parallel coordinate plot, scatterplot matrix or any other technique you like, determine the main structure in the data: how many groups there are, whether there are any outliers, overall shape. Write a paragraph on what you find in the data and your approach.
+
+
+```{r}
+#Import Datasets
+
+vischa  <- list()
+vischa[[1]] <- read_csv("data/vis_challenge1.csv")
+vischa[[2]] <- read_csv("data/vis_challenge2.csv")
+vischa[[3]] <- read_csv("data/vis_challenge3.csv")
+vischa[[4]] <- read_csv("data/vis_challenge4.csv")
+vischa[[5]] <- read_csv("data/vis_challenge5.csv")
+```
+
+##Dataset 1
+
+```{r}
+#tour
+X11()
+pal <- wes_palette("Darjeeling1", 250, type = "continuous")
+col <- pal[1:250]
+animate_xy(vischa[[1]], axes="bottomleft")
+```
+```{r}
+# #pca
+# set.seed(05052020)
+# vc1_pca <- prcomp(vischa[[1]], scale=TRUE)
+# screeplot(vc1_pca, type="l")
+# vc1_pca_x <- as_tibble(vc1_pca$x) %>% 
+#   mutate(cluster=vischa[[1]]$cluster)
+# ggplot(vc1_pca_x, mapping=aes(x=PC1, y=PC2))+
+#   geom_point()
+# ggplot(vc1_pca_x, mapping=aes(x=PC1, y=PC2, color=factor(cluster)))+
+#   geom_point()
+# vc1_loadings <- as_tibble(vc1_pca$rotation) %>% 
+#   dplyr::select(PC1, PC2) %>%
+#   rowid_to_column(var = "Xvar") %>% 
+#   pivot_longer(PC1:PC2, names_to='PC', values_to='loadings')
+# ggplot(vc1_loadings, mapping=aes(x=Xvar, y=loadings)) + 
+#   geom_col() +
+#   facet_grid(PC~.)
+```
+```{r}
+X11()
+vc1_kout = kmeans(vischa[[1]], 5)
+vischa[[1]]$cluster = vc1_kout$cluster
+pal <- wes_palette(n=5, "Darjeeling1")
+col <- pal[as.numeric(vischa[[1]]$cluster)]
+animate_xy(vischa[[1]][,1:4], axes="bottomleft", col=col)
+```
+```{r}
+group_by(vischa[[1]], cluster) %>%
+  summarize(n())
+```
+This data was first explored using a grand tour, to identify roughly 4 major blobs of data. A principle component analysis revealed roughly the same, 4 blobs centered around PC1=$-0.5$, PC2=$1$ ; PC1 = $1$, PC2 = $1$; PC1 = $2$, PC2 = $-1.5$ and PC1=$-2$ and PC2=$-2$. However experimenting in touring the data after k-means clustering revealed that the cluster at PC1 = $-0.5$ PC2 = $1$ which appears mildly ellipsoid at first inspection actually contains two clusters mildly differing in PC1 which are quite discernable in the tour. All of the blobs appear to have similar variances and when grouped into 5, have roughly equal number of members among the groups.     
+
+## Dataset 2
+
+```{r}
+#tour
+X11()
+pal <- wes_palette("Darjeeling1", 201, type = "continuous")
+col <- pal[1:201]
+animate_xy(vischa[[2]][,1:5], axes="bottomleft")
+```
+```{r}
+set.seed(05052020)
+vc2_pca <- prcomp(vischa[[2]][,1:5], scale=TRUE)
+screeplot(vc2_pca, type="l")
+vc2_pca_x <- as_tibble(vc2_pca$x) 
+ggplot(vc2_pca_x, mapping=aes(x=PC1, y=PC2))+
+  geom_point()
+vc2_loadings <- as_tibble(vc2_pca$rotation) %>%
+  dplyr::select(PC1, PC2) %>%
+  rowid_to_column(var = "Xvar") %>% 
+  pivot_longer(PC1:PC2, names_to='PC', values_to='loadings')
+ggplot(vc2_loadings, mapping=aes(x=Xvar, y=loadings)) + 
+  geom_col() +
+  facet_grid(PC~.)
+```
+
+```{r}
+X11()
+vc1_kout = kmeans(vischa[[2]], 3)
+vischa[[2]]$cluster = vc1_kout$cluster
+pal <- wes_palette(n=3, "Darjeeling1")
+col <- pal[as.numeric(vischa[[2]]$cluster)]
+animate_xy(vischa[[2]][,1:5], axes="bottomleft", col=col)
+```
+```{r fig.width=6, fig.height=6}
+library(psych)
+pairs.panels(vischa[[2]][,1:5], 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB",
+             density = TRUE,  # show density plots
+             ellipses = TRUE # show correlation ellipses
+             )
+```
+The dataset 2 does not appear have distinct clusters. We can see from the PCA loadings that perhaps X2 and X4 are correlated and that X1, X3 and X5 are inversely correlated. We confirm this with A correlation matrix shows the data ellispoid along certain projections due to mild  correlations between all the variables, strongest between X1 and X3 and weaker between X2 and X3, X3 and X4, X4 and X5, 
+
+
+
+Dataset 3
+
+```{r}
+#tour
+X11()
+pal <- wes_palette("Darjeeling1", 284, type = "continuous")
+col <- pal[1:284]
+animate_xy(vischa[[3]], axes="bottomleft", col=col)
+```
+```{r}
+set.seed(05052020)
+vc3_pca <- prcomp(vischa[[3]], scale=TRUE)
+screeplot(vc3_pca, type="l")
+vc3_pca_x <- as_tibble(vc3_pca$x) 
+ggplot(vc3_pca_x, mapping=aes(x=PC1, y=PC2))+
+  geom_point()
+vc3_loadings <- as_tibble(vc3_pca$rotation) %>% 
+  dplyr::select(PC1, PC2) %>%
+  rowid_to_column(var = "Xvar") %>% 
+  pivot_longer(PC1:PC2, names_to='PC', values_to='loadings')
+ggplot(vc3_loadings, mapping=aes(x=Xvar, y=loadings)) + 
+  geom_col() +
+  facet_grid(PC~.)
+```
+```{r fig.width=6, fig.height=6}
+library(psych)
+pairs.panels(vischa[[3]][,1:5], 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB",
+             density = TRUE,  # show density plots
+             ellipses = TRUE # show correlation ellipses
+             )
+```
+Dataset 3 appears to be mushroom shaped, with a dense stem and a sparse cap upon inspection by tour. Using a correlation matrix shows that X1 and X2 could be two normal distributions with the same mean but different variances overlaid on one another, andthe variables X3, X4 and X5 all can be shown to be right skewed distributions with a certain degree of positive covariance, this results in the dense tight stem near the centre of the distributions, and the long tail fanning out into the cap of the mushroom. 
+
+
+```{r}
+X11()
+vc1_kout = kmeans(vischa[[3]], 3)
+vischa[[3]]$cluster = vc1_kout$cluster
+pal <- wes_palette(n=3, "Darjeeling1")
+col <- pal[as.numeric(vischa[[3]]$cluster)]
+animate_xy(vischa[[3]][,1:5], axes="bottomleft", col=col)
+
+```
+
+
+
+Dataset 4
+
+```{r}
+#tour
+X11()
+pal <- wes_palette("Darjeeling1", 925, type = "continuous")
+col <- pal[1:925]
+animate_xy(vischa[[4]], axes="bottomleft", col=col)
+```
+
+```{r fig.width=7, fig.height=7}
+library(psych)
+pairs.panels(vischa[[4]][,1:5], 
+             method = "pearson", # correlation method
+             hist.col = "#00AFBB",
+             density = TRUE,  # show density plots
+             ellipses = TRUE, # show correlation ellipses
+             rug = TRUE
+             )
+```
+The data appears to have complex features when inspecting with the tour. Using a scatterplot matrix we see that the data is clustered into groups along X4 and X5, with a range of variances but clearly delinated. This is seen in the cross-correlations between the two columns and the other three variables which appear to be all more or less zero centered gaussian distributions. When the grouped variables are projected onto the normally distributed variables, we see the characteristic cruciform shape, with the gaps along the X4 or X5 axis where the groups break. 
+
+
+```{r}
+X11()
+vc1_kout = kmeans(vischa[[4]], 7)
+vischa[[4]]$cluster = vc1_kout$cluster
+pal <- wes_palette("Darjeeling1", n=7, type="continuous")
+col <- pal[as.numeric(vischa[[4]]$cluster)]
+animate_xy(vischa[[4]], axes="bottomleft", col=col)
+
+```
+
+```{r}
+set.seed(05052020)
+vc4_pca <- prcomp(vischa[[4]][,1:4], scale=TRUE)
+screeplot(vc4_pca, type="l")
+vc4_pca_x <- as_tibble(vc4_pca$x) %>% mutate(cluster=vischa[[4]]$cluster) 
+ggplot(vc4_pca_x, mapping=aes(x=PC1, y=PC2, color=cluster))+
+  geom_point()+
+  scale_fill_manual(values=wes_palette("Darjeeling1", n=7, type="continuous"))
+
+```
+```{r}
+library(dplyr)
+vc4_loadings <- as_tibble(vc4_pca$rotation) %>% 
+  dplyr::select(PC1, PC2) %>%
+  rowid_to_column(var = "Xvar") %>% 
+  pivot_longer(PC1:PC2, names_to='PC', values_to='loadings')
+ggplot(vc4_loadings, mapping=aes(x=Xvar, y=loadings)) + 
+  geom_col() +
+  facet_grid(PC~.)
+```
+
+
+Dataset 5
+
+```{r}
+#tour
+X11()
+pal <- wes_palette("Darjeeling1", 3848, type = "continuous")
+col <- pal[1:3848]
+animate_xy(vischa[[5]], axes="bottomleft", col=col)
+```
+
+Using "Any technique", found the following by googling column names to identify the original synthesised dataset [3]
+
+
+  Part A was generated: 5000 (I think) 5-variable, uncorrelated, i.i.d. Gaussian observations.
+
+  To get part B, I duplicated part A, then reversed the sign on the observations for 3 of the 5 variables.
+
+  Part B was appended to Part A.
+
+  The order of the observations was randomized.
+
+  While waiting for my tardy car-pool companion, I took a piece of graph paper, and figured out a dot-matrix representation of the word, "EUREKA." I then added these observations to the "center" of the datatset.
+
+  The data were scaled, by variable (something like 1,3,5,7,11).
+
+  The data were rotated, then translated.
+
+  A few points in space within the datacloud were chosen as ellipsoid centers, then for each center, all observations within a (scaled and rotated) radius were identified, and eliminated - to form ellipsoidal voids.
+
+  The variables were given entirely ficticious names.
+
+##References
+
+##In Text
+[1]B. Myers, ‘Is Dark Chocolate Healthier Than Milk Chocolate?’, LIVESTRONG.COM. https://www.livestrong.com/article/355599-the-health-benefits-of-dark-vs-milk-chocolate/ (accessed May 05, 2020).
+
+[2]G. James, D. Witten, T. Hastie, and R. Tibshirani, An Introduction to Statistical Learning: with Applications in R. New York: Springer-Verlag, 2013.
+
+[3]R. K. Anderson, Visual Data Mining: The VisMiner Approach. John Wiley & Sons, 2012.
+
+##Software used
+Barret Schloerke, Jason Crowley, Di Cook, Francois Briatte, Moritz Marbach, Edwin Thoen, Amos Elberg and Joseph Larmarange
+  (2020). GGally: Extension to 'ggplot2'. R package version 1.5.0. https://CRAN.R-project.org/package=GGally
+  
+Ben Gorman (2018). mltools: Machine Learning Tools. R package version 0.3.5. https://CRAN.R-project.org/package=mltools
+
+C. Sievert. Interactive Web-Based Data Visualization with R, plotly, and shiny. Chapman and Hall/CRC Florida, 2020.
+
+Erich Neuwirth (2014). RColorBrewer: ColorBrewer Palettes. R package version 1.1-2.
+  https://CRAN.R-project.org/package=RColorBrewer
+  
+Hadley Wickham, Dianne Cook, Heike Hofmann, Andreas Buja (2011). tourr: An R Package for Exploring Multivariate Data with
+  Projections. Journal of Statistical Software, 40(2), 1-18. URL http://www.jstatsoft.org/v40/i02/.
+  
+Karthik Ram and Hadley Wickham (2018). wesanderson: A Wes Anderson Palette Generator. R package version 0.3.6.
+  https://CRAN.R-project.org/package=wesanderson
+  
+Max Kuhn (2020). caret: Classification and Regression Training. R package version 6.0-86.
+  https://CRAN.R-project.org/package=caret
+
+
+R Core Team (2020). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna,
+  Austria. URL https://www.R-project.org/.
+  
+Revelle, W. (2019) psych: Procedures for Personality and Psychological Research, Northwestern University, Evanston, Illinois,
+  USA, https://CRAN.R-project.org/package=psych Version = 1.9.12.
+
+Venables, W. N. & Ripley, B. D. (2002) Modern Applied Statistics with S. Fourth Edition. Springer, New York. ISBN 0-387-95457-0
+Terry Therneau and Beth Atkinson (2019). rpart: Recursive Partitioning and Regression Trees. R package version 4.1-15.
+  https://CRAN.R-project.org/package=rpart
+
+Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686,
+  https://doi.org/10.21105/joss.01686
+
 
