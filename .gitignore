@@ -1,5 +1,6 @@
 .Rproj.user/
-$ cat .Rhistory
-$ cat .RData
-$ cat .Ruserdata
-*.[oa]
+*.Ruserdata
+*.pdf
+*.Rhistory
+**/data
+.Rproj.user
