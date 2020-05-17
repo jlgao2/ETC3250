@@ -318,7 +318,7 @@ animate_xy(vischa[[1]], axes="bottomleft")
 #   geom_col() +
 #   facet_grid(PC~.)
 ```
-```{r}
+```{r eval=FALSE, echo=TRUE}
 X11()
 vc1_kout = kmeans(vischa[[1]], 5)
 vischa[[1]]$cluster = vc1_kout$cluster
