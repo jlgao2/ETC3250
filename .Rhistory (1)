@@ -1,0 +1,512 @@
+summary(rates_pca)
+rates_pca$x %>%
+as_tibble() %>%
+mutate("currency" = as_vector(rates_sub_wide[2:16,1])) %>%
+ggplot(aes(x=PC1, y=PC2, label=currency)) +
+geom_point() +
+#geom_point(aes(x=PC1, y=PC2)) +
+theme(aspect.ratio=1)
+#rates_pc_loadings <- as_tibble(rates_pca$rotation) %>%
+#  mutate(date = ???,
+#         indx = 1:nrow(???),
+#         ymin=rep(0, nrow(rates_pca$rotation)))
+#ggplot(rates_pc_loadings) +
+#  geom_hline(yintercept=c(???,
+#                          ???)), colour="red") +
+#  geom_???(aes(x=???, ymin=???, ymax=???)) +
+#  geom_???(aes(x=???, y=???))
+#ggplot(rates_pc_loadings) +
+#  geom_hline(yintercept=c(???,
+#                          ???)), colour="red") +
+#  geom_???(aes(x=???, ymin=???, ymax=???)) +
+#  geom_???(aes(x=???, y=???))
+library(ggrepel)
+#library(ggfortify)
+rates_sub_wide <- rates_sub_long %>%
+pivot_wider(id_cols=-date, names_from=date, values_from=std_r8s)
+rates_pca <- prcomp(rates_sub_wide[2:16,2:153], scale=FALSE)
+screeplot(rates_pca, type="l")
+summary(rates_pca)
+rates_pca$x %>%
+as_tibble() %>%
+mutate("currency" = as_vector(rates_sub_wide[2:16,1])) %>%
+ggplot(aes(x=PC1, y=PC2)) +
+geom_point() +
+geom_text(aes(x=PC1, y=PC2, label=currency)) +
+theme(aspect.ratio=1)
+#rates_pc_loadings <- as_tibble(rates_pca$rotation) %>%
+#  mutate(date = ???,
+#         indx = 1:nrow(???),
+#         ymin=rep(0, nrow(rates_pca$rotation)))
+#ggplot(rates_pc_loadings) +
+#  geom_hline(yintercept=c(???,
+#                          ???)), colour="red") +
+#  geom_???(aes(x=???, ymin=???, ymax=???)) +
+#  geom_???(aes(x=???, y=???))
+#ggplot(rates_pc_loadings) +
+#  geom_hline(yintercept=c(???,
+#                          ???)), colour="red") +
+#  geom_???(aes(x=???, ymin=???, ymax=???)) +
+#  geom_???(aes(x=???, y=???))
+rates_pc_loadings <- as_tibble(rates_pca$rotation)
+View(rates_pc_loadings)
+View(df_pca)
+> View(rates_pc_loadings)
+View(rates_pc_loadings)
+library(ggrepel)
+#library(ggfortify)
+rates_sub_wide <- rates_sub_long %>%
+pivot_wider(id_cols=-date, names_from=date, values_from=std_r8s)
+rates_pca <- prcomp(rates_sub_wide[2:16,2:153], scale=FALSE)
+screeplot(rates_pca, type="l")
+summary(rates_pca)
+rates_pca$x %>%
+as_tibble() %>%
+mutate("currency" = as_vector(rates_sub_wide[2:16,1])) %>%
+ggplot(aes(x=PC1, y=PC2)) +
+geom_point() +
+geom_text(aes(x=PC1, y=PC2, label=currency)) +
+theme(aspect.ratio=1)
+rates_pc_loadings <- as_tibble(rates_pca$rotation) %>%
+mutate(date = colnames(rates_sub_wide[2:153]),
+indx = 1:nrow(rates_pca$rotation),
+ymin=rep(0, nrow(rates_pca$rotation)))
+#ggplot(rates_pc_loadings) +
+#  geom_hline(yintercept=c(???,
+#                          ???)), colour="red") +
+#  geom_???(aes(x=???, ymin=???, ymax=???)) +
+#  geom_???(aes(x=???, y=???))
+#ggplot(rates_pc_loadings) +
+#  geom_hline(yintercept=c(???,
+#                          ???)), colour="red") +
+#  geom_???(aes(x=???, ymin=???, ymax=???)) +
+#  geom_???(aes(x=???, y=???))
+View(rates_sub_long)
+library(ggrepel)
+#library(ggfortify)
+rates_sub_wide <- rates_sub_long %>%
+pivot_wider(id_cols=-date, names_from=date, values_from=std_r8s)
+rates_pca <- prcomp(rates_sub_wide[2:16,2:153], scale=FALSE)
+screeplot(rates_pca, type="l")
+summary(rates_pca)
+rates_pca$x %>%
+as_tibble() %>%
+mutate("currency" = as_vector(rates_sub_wide[2:16,1])) %>%
+ggplot(aes(x=PC1, y=PC2)) +
+geom_point() +
+geom_text(aes(x=PC1, y=PC2, label=currency)) +
+theme(aspect.ratio=1)
+rates_pc_loadings <- as_tibble(rates_pca$rotation) %>%
+mutate(date = colnames(rates_sub_wide[2:153]),
+indx = 1:nrow(rates_pca$rotation),
+ymin=rep(0, nrow(rates_pca$rotation)))
+ggplot(rates_pc_loadings) +
+geom_hline(yintercept=c(1/sqrt(15),
+-1/sqrt(15)), colour="red") +
+geom_linerange(aes(x=indx, ymin=0, ymax=PC1)) +
+geom_point(aes(x=indx, y=PC1))
+#ggplot(rates_pc_loadings) +
+#  geom_hline(yintercept=c(???,
+#                          ???)), colour="red") +
+#  geom_???(aes(x=???, ymin=???, ymax=???)) +
+#  geom_???(aes(x=???, y=???))
+library(ggrepel)
+#library(ggfortify)
+rates_sub_wide <- rates_sub_long %>%
+pivot_wider(id_cols=-date, names_from=date, values_from=std_r8s)
+rates_pca <- prcomp(rates_sub_wide[2:16,2:153], scale=FALSE)
+screeplot(rates_pca, type="l")
+summary(rates_pca)
+rates_pca$x %>%
+as_tibble() %>%
+mutate("currency" = as_vector(rates_sub_wide[2:16,1])) %>%
+ggplot(aes(x=PC1, y=PC2)) +
+geom_point() +
+geom_text(aes(x=PC1, y=PC2, label=currency)) +
+theme(aspect.ratio=1)
+rates_pc_loadings <- as_tibble(rates_pca$rotation) %>%
+mutate(date = colnames(rates_sub_wide[2:153]),
+indx = 1:nrow(rates_pca$rotation),
+ymin=rep(0, nrow(rates_pca$rotation)))
+ggplot(rates_pc_loadings) +
+geom_hline(yintercept=c(1/sqrt(15),
+-1/sqrt(15)), colour="red") +
+geom_linerange(aes(x=indx, ymin=0, ymax=PC1)) +
+geom_point(aes(x=indx, y=PC1))
+ggplot(rates_pc_loadings) +
+geom_hline(yintercept=c(1/sqrt(15),
+-1/sqrt(15)), colour="red") +
+geom_linerange(aes(x=indx, ymin=0, ymax=PC2)) +
+geom_point(aes(x=indx, y=PC2))
+a = -0.5*((1/s1^2)-(1/s2^2))
+library(tidyverse)
+set.seed("24042020")
+n <- 100; n1 <- 50
+m1 <- 4
+m2 <- -5
+s1 <- 0.5
+s2 <- 5
+x <- c(rnorm(n1, m1, s1), rnorm(n-n1, m2, s2))
+y <- c(rep(1, n1), rep(2, n-n1))
+df <- tibble(x, y)
+x <- seq(-20, 20, 0.2)
+dx <- c(dnorm(x, m1, s1), dnorm(x, m2, s2))
+y <- factor(c(rep(0, length(x)), rep(1, length(x))))
+df_pop <- tibble(x=c(x,x), dx, y)
+p <- ggplot() +
+geom_rug(data=df, aes(x=x, y=0, colour=factor(y)), alpha=0.7) +
+geom_line(data=df_pop, aes(x=x, y=dx, colour=y)) +
+scale_color_brewer("", palette="Dark2") +
+xlab("x")  + ylab("density")
+p
+a = -0.5*((1/s1^2)-(1/s2^2))
+b = m1/s1^2 - m2/s2^2
+c = -0.5*(m1^2/s1^2-m2^2/s2^2) - log(s1) + log(s2)
+x_pos = (-b + sqrt(b^2 - 4*a*c))/(2*a)
+x_neg = (-b - sqrt(b^2 - 4*a*c))/(2*a)
+p + geom_vline(xintercept=x_pos, linetype=2)
+a = -0.5*((1/s1^2)-(1/s2^2))
+b = m1/s1^2 - m2/s2^2
+c = -0.5*(m1^2/s1^2-m2^2/s2^2) - log(s1) + log(s2)
+x_pos = (-b + sqrt(b^2 - 4*a*c))/(2*a)
+x_neg = (-b - sqrt(b^2 - 4*a*c))/(2*a)
+p + geom_vline(xintercept=x_pos, linetype=2)
+sprintf("QDA boundary is at", x_pos)
+a = -0.5*((1/s1^2)-(1/s2^2))
+b = m1/s1^2 - m2/s2^2
+c = -0.5*(m1^2/s1^2-m2^2/s2^2) - log(s1) + log(s2)
+x_pos = (-b + sqrt(b^2 - 4*a*c))/(2*a)
+x_neg = (-b - sqrt(b^2 - 4*a*c))/(2*a)
+p + geom_vline(xintercept=x_pos, linetype=2)
+sprintf("QDA boundary is at %f", x_pos)
+p + geom_vline(xintercept=x_pos, linetype=2) +
+geom_vline(xintercept=(m1+m2)/2, linetype=3, colour="red")
+knitr::opts_chunk$set(
+echo = TRUE,
+eval = TRUE,
+message = TRUE,
+warning = TRUE)
+library(tidyverse)
+set.seed("24042020")
+n <- 100; n1 <- 50
+m1 <- 4
+m2 <- -5
+s1 <- 0.5
+s2 <- 5
+x <- c(rnorm(n1, m1, s1), rnorm(n-n1, m2, s2))
+y <- c(rep(1, n1), rep(2, n-n1))
+df <- tibble(x, y)
+x <- seq(-20, 20, 0.2)
+dx <- c(dnorm(x, m1, s1), dnorm(x, m2, s2))
+y <- factor(c(rep(0, length(x)), rep(1, length(x))))
+df_pop <- tibble(x=c(x,x), dx, y)
+p <- ggplot() +
+geom_rug(data=df, aes(x=x, y=0, colour=factor(y)), alpha=0.7) +
+geom_line(data=df_pop, aes(x=x, y=dx, colour=y)) +
+scale_color_brewer("", palette="Dark2") +
+xlab("x")  + ylab("density")
+p
+library(tidyverse)
+library(ISOcodes)
+data("ISO_3166_1")
+# Load data
+load("data/pisa_scores.rda")
+# The country information will be used to join the data with map data
+# and the ISOcodes package provides information about codes and country
+scores <- scores %>%
+mutate(CNT=recode(CNT, "QES"="ESP", "QCH"="CHN", "QAR"="ARG", "TAP"="TWN")) %>%
+filter(CNT != "QUC") %>%
+filter(CNT != "QUD") %>%
+filter(CNT != "QUE") %>%
+mutate(gender=factor(gender, levels=c(1,2), labels=c("female","male")))
+score_gap <- scores %>%
+group_by(CNT, gender) %>%
+summarise(math=weighted.mean(math, w=w, na.rm=T),
+reading=weighted.mean(reading, w=w, na.rm=T),
+science=weighted.mean(science, w=w, na.rm=T)) %>%
+pivot_longer(cols=c(math, reading, science), names_to="test", values_to="score") %>%
+pivot_wider(names_from=gender, values_from=score) %>%
+mutate(gap = male - female) %>%
+pivot_wider(id_cols=CNT, names_from=test, values_from=gap)
+View(score_gap)
+View(scores)
+knitr::opts_chunk$set(
+echo = TRUE,
+eval = TRUE,
+message = TRUE,
+warning = TRUE)
+library(tidyverse)
+set.seed("24042020")
+n <- 100; n1 <- 50
+m1 <- 4
+m2 <- -5
+s1 <- 0.5
+s2 <- 5
+x <- c(rnorm(n1, m1, s1), rnorm(n-n1, m2, s2))
+y <- c(rep(1, n1), rep(2, n-n1))
+df <- tibble(x, y)
+x <- seq(-20, 20, 0.2)
+dx <- c(dnorm(x, m1, s1), dnorm(x, m2, s2))
+y <- factor(c(rep(0, length(x)), rep(1, length(x))))
+df_pop <- tibble(x=c(x,x), dx, y)
+p <- ggplot() +
+geom_rug(data=df, aes(x=x, y=0, colour=factor(y)), alpha=0.7) +
+geom_line(data=df_pop, aes(x=x, y=dx, colour=y)) +
+scale_color_brewer("", palette="Dark2") +
+xlab("x")  + ylab("density")
+p
+library(tidyverse)
+set.seed("24042020")
+n <- 100; n1 <- 50
+m1 <- 4
+m2 <- -5
+s1 <- 0.5
+s2 <- 5
+x <- c(rnorm(n1, m1, s1), rnorm(n-n1, m2, s2))
+y <- c(rep(1, n1), rep(2, n-n1))
+df <- tibble(x, y)
+x <- seq(-20, 20, 0.2)
+dx <- c(dnorm(x, m1, s1), dnorm(x, m2, s2))
+y <- factor(c(rep(1, length(x)), rep(2, length(x))))
+df_pop <- tibble(x=c(x,x), dx, y)
+p <- ggplot() +
+geom_rug(data=df, aes(x=x, y=0, colour=factor(y)), alpha=0.7) +
+geom_line(data=df_pop, aes(x=x, y=dx, colour=y)) +
+scale_color_brewer("", palette="Dark2") +
+xlab("x")  + ylab("density")
+p
+a = -0.5*((1/s1^2)-(1/s2^2))
+b = m1/s1^2 - m2/s2^2
+c = -0.5*(m1^2/s1^2-m2^2/s2^2) - log(s1) + log(s2)
+x_pos = (-b + sqrt(b^2 - 4*a*c))/(2*a)
+x_neg = (-b - sqrt(b^2 - 4*a*c))/(2*a)
+p + geom_vline(xintercept=x_pos, linetype=2)
+sprintf("QDA boundary is at %f", x_pos)
+p + geom_vline(xintercept=x_pos, linetype=2) +
+geom_vline(xintercept=(m1+m2)/2, linetype=3, colour="red")
+library(tidyverse)
+library(ISOcodes)
+data("ISO_3166_1")
+# Load data
+load("data/pisa_scores.rda")
+# The country information will be used to join the data with map data
+# and the ISOcodes package provides information about codes and country
+scores <- scores %>%
+mutate(CNT=recode(CNT, "QES"="ESP", "QCH"="CHN", "QAR"="ARG", "TAP"="TWN")) %>%
+filter(CNT != "QUC") %>%
+filter(CNT != "QUD") %>%
+filter(CNT != "QUE") %>%
+mutate(gender=factor(gender, levels=c(1,2), labels=c("female","male")))
+score_gap <- scores %>%
+group_by(CNT, gender) %>%
+summarise(math=weighted.mean(math, w=w, na.rm=T),
+reading=weighted.mean(reading, w=w, na.rm=T),
+science=weighted.mean(science, w=w, na.rm=T)) %>%
+pivot_longer(cols=c(math, reading, science), names_to="test", values_to="score") %>%
+pivot_wider(names_from=gender, values_from=score) %>%
+mutate(gap = male - female) %>%
+pivot_wider(id_cols=CNT, names_from=test, values_from=gap)
+library(boot)
+#library(plyr)
+# Compute confidence intervals
+cifn <- function(d, i) {
+x <- d[i,]
+ci <- weighted.mean(x$math[x$gender=="male"], w=x$w[x$gender=="male"], na.rm=T)-
+weighted.mean(x$math[x$gender=="female"], w=x$w[x$gender=="female"], na.rm=T)
+ci
+}
+bootfn <- function(d) {
+r <- boot(d, statistic=cifn, R=100)
+l <- sort(r$t)[5]
+u <- sort(r$t)[95]
+ci <- c(l, u)
+return(ci)
+}
+#student2012.sub.summary.gap.boot <- ddply(student2012.sub, .(CNT), bootfn)
+score_gap_boot <- scores %>%
+split(.$CNT) %>% purrr::map(bootfn) %>% as_tibble() %>%
+pivot_longer(cols=everything(), names_to="CNT", values_to="bounds" ) %>%
+arrange(CNT) %>%
+mutate(bound=rep(c("ml","mu"), length(unique(scores$CNT)))) %>%
+pivot_wider(names_from = bound, values_from = bounds)
+score_gap <- score_gap %>%
+left_join(score_gap_boot, by="CNT")
+# <- score_gap %>%
+#  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
+#  rename(name = Name)
+#score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
+library(forcats)
+score_gap <- score_gap %>%
+mutate(name = recode(name, "Czechia"="Czech Republic",
+"Korea, Republic of"="South Korea",
+"Macedonia, Republic of"="Macedonia",
+"Moldova, Republic of"="Moldova",
+"Russian Federation"="Russia",
+"Taiwan, Province of China"="Taiwan",
+"Trinidad and Tobago"="Trinidad",
+"United States"="USA",
+"United Kingdom"="UK",
+"Viet Nam"="Vietnam"))
+*A significant gender gap in maths performance in favour of male students has returned, despite closing in 2015* [Natassia Chrysanthos, Sydney Morning Herald](https://www.smh.com.au/national/nsw/urgent-need-to-address-maths-performance-as-nsw-slumps-in-international-test-20191203-p53ge2.html)
+Last December, the 2018 [OECD PISA results](http://www.oecd.org/pisa/data/) were released. These are standardised test scores in math, reading and science, of 15 year olds across the globe. It led to a flurry of articles in the news about slipping standards of Australian students. If you also browsed the news of other countries (including New Zealand, Indonesia, Finland), you would find that many had similarly woeful stories. The above headline focuses on the math gap. To explore this, we will compute bootstrap confidence intervals for the difference between weighted averages for boys and girls in each country. The data is from the 2015 results.
+# <- score_gap %>%
+#  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
+#  rename(name = Name)
+#score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
+library(forcats)
+score_gap <- score_gap %>%
+mutate(name = recode(name, "Czechia"="Czech Republic",
+"Korea, Republic of"="South Korea",
+"Macedonia, Republic of"="Macedonia",
+"Moldova, Republic of"="Moldova",
+"Russian Federation"="Russia",
+"Taiwan, Province of China"="Taiwan",
+"Trinidad and Tobago"="Trinidad",
+"United States"="USA",
+"United Kingdom"="UK",
+"Viet Nam"="Vietnam"))
+library(tidyverse)
+library(ISOcodes)
+data("ISO_3166_1")
+# Load data
+load("data/pisa_scores.rda")
+# The country information will be used to join the data with map data
+# and the ISOcodes package provides information about codes and country
+scores <- scores %>%
+mutate(CNT=recode(CNT, "QES"="ESP", "QCH"="CHN", "QAR"="ARG", "TAP"="TWN")) %>%
+filter(CNT != "QUC") %>%
+filter(CNT != "QUD") %>%
+filter(CNT != "QUE") %>%
+mutate(gender=factor(gender, levels=c(1,2), labels=c("female","male")))
+score_gap <- scores %>%
+group_by(CNT, gender) %>%
+summarise(math=weighted.mean(math, w=w, na.rm=T),
+reading=weighted.mean(reading, w=w, na.rm=T),
+science=weighted.mean(science, w=w, na.rm=T)) %>%
+pivot_longer(cols=c(math, reading, science), names_to="test", values_to="score") %>%
+pivot_wider(names_from=gender, values_from=score) %>%
+mutate(gap = male - female) %>%
+pivot_wider(id_cols=CNT, names_from=test, values_from=gap)
+library(boot)
+#library(plyr)
+# Compute confidence intervals
+cifn <- function(d, i) {
+x <- d[i,]
+ci <- weighted.mean(x$math[x$gender=="male"], w=x$w[x$gender=="male"], na.rm=T)-
+weighted.mean(x$math[x$gender=="female"], w=x$w[x$gender=="female"], na.rm=T)
+ci
+}
+bootfn <- function(d) {
+r <- boot(d, statistic=cifn, R=100)
+l <- sort(r$t)[5]
+u <- sort(r$t)[95]
+ci <- c(l, u)
+return(ci)
+}
+#student2012.sub.summary.gap.boot <- ddply(student2012.sub, .(CNT), bootfn)
+score_gap_boot <- scores %>%
+split(.$CNT) %>% purrr::map(bootfn) %>% as_tibble() %>%
+pivot_longer(cols=everything(), names_to="CNT", values_to="bounds" ) %>%
+arrange(CNT) %>%
+mutate(bound=rep(c("ml","mu"), length(unique(scores$CNT)))) %>%
+pivot_wider(names_from = bound, values_from = bounds)
+score_gap <- score_gap %>%
+left_join(score_gap_boot, by="CNT")
+score_gap <- score_gap %>%
+left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
+rename(name = Name)
+score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
+library(forcats)
+score_gap <- score_gap %>%
+mutate(name = recode(name, "Czechia"="Czech Republic",
+"Korea, Republic of"="South Korea",
+"Macedonia, Republic of"="Macedonia",
+"Moldova, Republic of"="Moldova",
+"Russian Federation"="Russia",
+"Taiwan, Province of China"="Taiwan",
+"Trinidad and Tobago"="Trinidad",
+"United States"="USA",
+"United Kingdom"="UK",
+"Viet Nam"="Vietnam"))
+ggplot(data=score_gap, aes(x=fct_reorder(name, math), y=math)) +
+geom_hline(yintercept=0, colour="red") +
+geom_point() +
+geom_errorbar(aes(ymin=ml, ymax=mu), width=0) +
+coord_flip() +
+xlab("") + ylab("Gender gap") + ylim(c(-35, 35))
+glimpse(score_gap)
+summary(score_gap)
+score_gap <- score_gap %>%
+left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
+rename(name = Name)
+# score_gap <- score_gap %>%
+#  left_join(ISO_3166_1[,c("Alpha_3", "Name")], by=c("CNT"="Alpha_3")) %>%
+#  rename(name = Name)
+# score_gap$name[score_gap$CNT == "KSV"] <- "Kosovo"
+library(forcats)
+score_gap <- score_gap %>%
+mutate(name = recode(name, "Czechia"="Czech Republic",
+"Korea, Republic of"="South Korea",
+"Macedonia, Republic of"="Macedonia",
+"Moldova, Republic of"="Moldova",
+"Russian Federation"="Russia",
+"Taiwan, Province of China"="Taiwan",
+"Trinidad and Tobago"="Trinidad",
+"United States"="USA",
+"United Kingdom"="UK",
+"Viet Nam"="Vietnam"))
+glimpse(score_gap)
+summary(score_gap)
+ggplot(data=score_gap, aes(x=fct_reorder(name, math), y=math)) +
+geom_hline(yintercept=0, colour="red") +
+geom_point() +
+geom_errorbar(aes(ymin=ml, ymax=mu), width=0) +
+coord_flip() +
+xlab("") + ylab("Gender gap") + ylim(c(-35, 35))
+library(tidyverse)
+library(lubridate)
+rates <- read_csv("data/rates_Nov19_Mar20.csv")
+ggplot(rates, aes(x=ymd(date), y=AUD)) + geom_line()
+library(ggrepel)
+#library(ggfortify)
+rates_sub_wide <- rates_sub_long %>%
+pivot_wider(id_cols=-date, names_from=date, values_from=std_r8s)
+library(viridisLite)
+library(plotly)
+library(lubridate)
+rates_sub <- rates %>%
+select(c(date, USD, AUD, CAD, CHF, CNY, EUR, GBP, INR, JPY, KRW, MXN, NZD, RUB, SEK, SGD, ZAR)) %>%
+mutate_if(is.numeric, function(x) -1*(x-mean(x))/sd(x))
+rates_sub_long <- rates_sub %>%
+pivot_longer(cols=-date, names_to="currency", values_to="std_r8s")
+ggplot(rates_sub_long, aes(x=date, y=std_r8s, colour=currency)) + geom_line() +
+scale_colour_viridis_d("")
+ggplotly() #Make an interactive plot to browse the currencies
+library(ggrepel)
+#library(ggfortify)
+rates_sub_wide <- rates_sub_long %>%
+pivot_wider(id_cols=-date, names_from=date, values_from=std_r8s)
+rates_pca <- prcomp(rates_sub_wide[2:16,2:153], scale=FALSE)
+screeplot(rates_pca, type="l")
+summary(rates_pca)
+rates_pca$x %>%
+as_tibble() %>%
+mutate("currency" = as_vector(rates_sub_wide[2:16,1])) %>%
+ggplot(aes(x=PC1, y=PC2)) +
+geom_point() +
+geom_text(aes(x=PC1, y=PC2, label=currency)) +
+theme(aspect.ratio=1)
+rates_pc_loadings <- as_tibble(rates_pca$rotation) %>%
+mutate(date = colnames(rates_sub_wide[2:153]),
+indx = 1:nrow(rates_pca$rotation),
+ymin=rep(0, nrow(rates_pca$rotation)))
+ggplot(rates_pc_loadings) +
+geom_hline(yintercept=c(1/sqrt(15),
+-1/sqrt(15)), colour="red") +
+geom_linerange(aes(x=indx, ymin=0, ymax=PC1)) +
+geom_point(aes(x=indx, y=PC1))
+ggplot(rates_pc_loadings) +
+geom_hline(yintercept=c(1/sqrt(15),
+-1/sqrt(15)), colour="red") +
+geom_linerange(aes(x=indx, ymin=0, ymax=PC2)) +
+geom_point(aes(x=indx, y=PC2))

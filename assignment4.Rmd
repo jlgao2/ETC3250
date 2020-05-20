@@ -9,7 +9,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = FALSE,
-  eval = FALSE,
+  eval = TRUE,
   message = FALSE,
   warning = FALSE)
 ```
@@ -47,6 +47,9 @@ library(kableExtra)
 library(e1071)
 library(kernlab)
 library(randomForest)
+library(plotly)
+library(GGally)
+
 ```
 
 
@@ -107,7 +110,7 @@ The support vectors are the points 2, 3, 9, and 10 for this problem
 
 f. Argue that a slight movement of observation 4 would not affect the maximal margin hyperplane.
 
-The maximal margin hyperplane is only affected by the support vectors, therefore unless observation 4 moves to within the margin of the classifer, it will not change the maximal margin hyperplane
+The maximal margin hyperplane is only affected by the support vectors, therefore unless observation 4 moves to within the margin of the classifier, it will not change the maximal margin hyperplane
 
 g. Sketch a separating hyperplane that is *not* the optimal separating hyperplane, and provide the equation for this hyperplane.
 
@@ -154,7 +157,7 @@ And the classification equation is
 
 $$ y_i(19M - 4Mx_i - 4Mx_i2) > 0   $$
 
-i. Using the `svm` function of the `e1071` package fit the linear svm model to this data. Compare the result with your hand calculation.
+i. Using the `svm` function of the `e1071` package fit the linear SVM model to this data. Compare the result with your hand calculation.
 
 ```{r}
 mutate(df_mod, class=as_factor(class))
@@ -165,7 +168,7 @@ cf <- coef(svm_1)
 p8 <- p7 + geom_abline(mapping=aes(intercept=-cf[1]/cf[3], slope=-cf[2]/cf[3]), col = "red")
 p8
 ```
-#### 2. 
+#### 2
 
 Use the `Caravan` data from the `ISLR` package. Read the data description.
 
@@ -176,7 +179,7 @@ a. Compute the proportion of caravans purchased relative to not purchased. Is th
 data(Caravan)
 Caravan %>% count(Purchase)
 ```
-This is not a balanced dataset, the $No$ class is far larger than the $Yes$ class on this variable. This may cause problems in training, because the majority class can dominate the minority class. Classification results using a model thus trained may be accurate only due to the underlying distribution being learnt, rather than any differentiating features. 
+This is not a balanced dataset, the $No$ class is far larger than the $Yes$ class on this variable. This may cause problems in training, because the majority class can dominate the minority class. Classification results using a model thus trained may be accurate only due to the underlying distribution being learnt, rather than any differentiating features. Oversampling has been examined to see whether that would improve results in the Appendix. 
 
 b. Convert the response variable from a factor to an integer variable, where 1 indicates that the person purchased a caravan.
 
@@ -210,7 +213,7 @@ Caravan.test = Caravan[-train, ]
 ```
 would use just the first 1000 cases for the training set. What is wrong about doing this?
 
-It is not taking a random sample, but rather a convinience sample. 
+It is not taking a random sample, but rather a convenience sample. 
 
 ### 3. 
 
@@ -221,14 +224,16 @@ a. Use 1000 trees, and a shrinkage value of 0.01.
 ```{r}
 c_boost = gbm(Purchase~., data = trainCaravan, n.trees = 1000, shrinkage = 0.01, 
     distribution = "bernoulli")
-head(summary(c_boost, plotit=TRUE), 6)
+head(summary(c_boost, plotit=FALSE), 6)
 ```
 ```{r}
 best.iter <- gbm.perf(c_boost, method = "OOB")
 print(best.iter)
 ```
 
-b. Make a plot of the oob improvement against iteration number. What does this suggest about the number of iterations needed? Why do you think the oob improvement value varies so much, and can also be negative?
+b. Make a plot of the OOB improvement against iteration number. What does this suggest about the number of iterations needed? Why do you think the oob improvement value varies so much, and can also be negative?
+
+The OOB improvement graph suggests that the improvement in predictive performance plateaus after 400 iterations
 
 ```{r}
 c_boost_diag <- tibble(iter=1:1000, tr_err=c_boost$train.error, oob_improve=c_boost$oobag.improve)
@@ -245,12 +250,32 @@ addmargins(table(testCaravan$Purchase, boost.pred))
 
 d. What are the 6 most important variables? Make a plot of each to examine the relationship between these variables and the response. Explain what you learn from these plots.
 
-PPLEZIER	PPLEZIER	24.142909		
-PPERSAUT	PPERSAUT	23.061736		
-PBRAND	  PBRAND	  6.043500		
-ALEVEN	  ALEVEN	  4.755354		
-APERSAUT	APERSAUT	3.695288		
-MKOOPKLA	MKOOPKLA	3.043218	
+The boosted tree model suggested that the following six variables are most important, with the attached relative importance figures. 
+```
+Variable  Description                 Relative Importance
+PPLEZIER	Contribution boat policies	24.142909		
+PPERSAUT	Contribution car policies	  23.061736		
+PBRAND	  Contribution fire policies	6.043500		
+ALEVEN	  Number of life insurances	  4.755354		
+APERSAUT	Number of car policies    	3.695288		
+MKOOPKLA	Purchasing power class	    3.043218	
+```
+```{r}
+bstVars <- c('PPLEZIER', 'PPERSAUT', 'PBRAND', 'ALEVEN', 'APERSAUT', 'MKOOPKLA')
+i = 0
+pltList <- list()
+
+for (var in bstVars){
+  i <- i+1
+  p <- ggplot(data = Caravan, mapping = aes_string(x=var, color='Purchase')) + 
+    geom_histogram(aes(y=..density..), alpha=0.2, position="identity") +
+    geom_density()
+  pltList[[i]] <- p
+  }
+
+grid.arrange(pltList[[1]], pltList[[2]],pltList[[3]],pltList[[4]],pltList[[5]],pltList[[6]], nrow = 3)
+```
+People who purchase caraven policies are more likely to have contributions for car, fire and boat policies. They have more life and car policies and they tend to be slightly more well off than the average insurance customer *in this sample* 
 
 
 
@@ -280,6 +305,29 @@ as_tibble(c_rf$importance) %>%
   bind_cols(var=rownames(c_rf$importance)) %>%
   arrange(desc(IncNodePurity)) %>% print(n=6)
 ```
+```
+Variable   Desciption                 %IncMSE       Inc Node Purity
+MOSTYPE    Customer Subtype           4.020756e-03	6.903134e+00	 		
+PBRAND     Contribution fire policies 5.697232e-04	6.231104e+00			
+PPERSAUT   Contribution car policies	1.313657e-03	5.604083e+00			
+MOPLMIDD   Medium level education     1.743855e-03	4.524628e+00			
+MKOOPKLA   Purchasing power class	    1.974170e-03	4.329415e+00			
+MGODGE     No religion                9.999202e-04	4.190742e+00	
+```
+```{r}
+rfVars <- c('MOSTYPE', 'MOPLMIDD', 'MGODGE')
+i = 0
+for (var in rfVars){
+  i <- i+1
+  p <- ggplot(data = Caravan, mapping = aes_string(x=var, color='Purchase')) + 
+    geom_density() + 
+    geom_histogram(aes(y=..density..), alpha=0.2, position="identity")
+  pltList[[i]] <- p
+  }
+
+grid.arrange(pltList[[1]], pltList[[2]],pltList[[3]], nrow = 2)
+```
+The new variables chose by the $randomForest$ package are MOSTYPE - Customer Subtype, MOPLMIDD - Medium level education, and MGODGE - No religion. We see that the people who buy Caravans are more likely to be MOSTYPE 0-20, which correlate to higher income subgroups such as "2 - Very Important Provincials" or "13 - Young all american family". It also appears that caravan purchasing folks are also more likely to have middle level of education and tend to be more religious. 
 
 ### 5. 
 
@@ -287,17 +335,40 @@ Here we will fit a gradient boosted model, using the `xgboost` package.
 
 a.  Read the description of the XGBoost technique at https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/, or other sources. Explain how this algorithm might differ from earlier boosted tree algorithms.
 
+XGBoost differs from standard boosting because it has additional regularisation features to prevent overfitting. (low bias high variance) [3]
+
 b. Tune the model fit to determine how many iterations to make. Then fit the model, using the parameter set provided.
 
 ```{r}
 c_tr_xg <- xgb.DMatrix(data = as.matrix(trainCaravan[,1:85]), label = trainCaravan[,86])
 c_ts_xg <- xgb.DMatrix(data = as.matrix(testCaravan[,1:85]), label = testCaravan[,86])
 
-params <- list(booster = "gbtree", objective = "binary:logistic", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
+params <- list(booster = "gbtree", 
+               objective = "binary:logistic", 
+               eta=0.3, 
+               gamma=0, 
+               max_depth=6, 
+               min_child_weight=1, 
+               subsample=1, 
+               colsample_bytree=1)
 
-xgbcv <- xgb.cv(params = params, data = c_tr_xg, nrounds = 100, nfold = 5, showsd = T, stratified = T, maximize = F)
+xgbcv <- xgb.cv(params = params, 
+                data = c_tr_xg, 
+                nrounds = 300, 
+                nfold = 5, 
+                showsd = T, 
+                stratified = T, 
+                maximize = F, 
+                early_stopping_rounds = 20)
 
-c_xgb <- xgb.train(params = params, data = c_tr_xg, nrounds = 10, watchlist = list(val=c_ts_xg,train=c_tr_xg), maximize = F , eval_metric = "error")
+
+```
+```{r}
+xgbcv
+
+min(xgbcv$test_error_mean)
+
+c_xgb <- xgb.train(params = params, data = c_tr_xg, nrounds = 4, watchlist = list(val=c_ts_xg,train=c_tr_xg), maximize = F , eval_metric = "error")
 ```
 
 b. Compute the error for the test set, and for each class. Consider a proportion 0.2 or greater to indicate that the customer will purchase a caravan.
@@ -314,12 +385,267 @@ c. Compute the variable importance. What are the 6 most important variables? Mak
 c_xgb_importance <- xgb.importance(feature_names = colnames(trainCaravan[,1:85]), model = c_xgb)
 head(c_xgb_importance, 6)
 ```
+```
+Feature   Description          Gain       Cover       Frequency
+MOPLHOOG	High level education 0.03290865	0.01464995	0.04210526		
+```
+```{r}
+rfVars <- c('MOPLHOOG')
+i = 0
+pltList <- list()
+
+for (var in rfVars){
+  i <- i+1
+  p <- ggplot(data = Caravan, mapping = aes_string(x=var, color='Purchase')) + 
+    geom_density() + 
+    geom_histogram(aes(y=..density..), alpha=0.2, position="identity")
+  pltList[[i]] <- p
+  }
+
+grid.arrange(pltList[[1]], nrow = 1)
+```
+This set of variables reveals an increased likelihood of caravan insurerers having a higher level of high level education. The most important variables for each of the three methods are tabulated here. 
+
+gbm 	    rf	      xgb
+PPLEZIER	MOSTYPE  	PPERSAUT
+PPERSAUT	PBRAND	  PPLEZIER
+PBRAND	  PPERSAUT  PBRAND
+ALEVEN	  MOPLMIDD	MKOOPKLA
+APERSAUT	MKOOPKLA 	MOSTYPE
+MKOOPKLA	MGODGE	  MOPLHOOG
 
 ### 6. 
 
 Compare and summarise the results of the three model fits. 
 
+
+                gbm     rf      xgb
+misclassified 	135	    161	    382
+false positives	35	    132	    332
+false negatives	100	    29	    50
+accuracy	      0.9304	0.9170	0.8031
+
+
+
 ### 7. 
 
 Now scramble the response variable (Purchase) using permutation. The resulting data has no true relationship between the response and predictors. Re-do Q5 with this data set. Write a paragraph explaining what you learn about the true data from analysing this permuted data.
+
+c. Break the data into 2/3 training and test set, ensuring that the same ratio of the response variable is achieved in both sets. Check that your sampling has produced this.
+```{r}
+sample(testCaravan[,86])
+```
+
+
+b. Tune the model fit to determine how many iterations to make. Then fit the model, using the parameter set provided.
+
+```{r}
+c_tr_xg_scmbl <- xgb.DMatrix(data = as.matrix(trainCaravan[,1:85]), 
+                             label = sample(trainCaravan[,86]))
+
+c_ts_xg_scmbl <- xgb.DMatrix(data = as.matrix(testCaravan[,1:85]), 
+                             label = sample(testCaravan[,86]))
+
+xgbcv_scmbl <- xgb.cv(params = params, 
+                data = c_tr_xg_scmbl, 
+                nrounds = 300, 
+                nfold = 5, 
+                showsd = T, 
+                stratified = T, 
+                maximize = F, 
+                early_stopping_rounds = 20)
+
+
+```
+```{r}
+c_xgb_scmbl <- xgb.train(params = params, data = c_tr_xg, nrounds = 1, watchlist = list(val=c_ts_xg,train=c_tr_xg), maximize = F , eval_metric = "error")
+```
+
+b. Compute the error for the test set, and for each class. Consider a proportion 0.2 or greater to indicate that the customer will purchase a caravan.
+
+```{r}
+xgbprob <- predict(c_xgb_scmbl, newdata=c_ts_xg_scmbl)
+xgbpred <- ifelse(xgbprob > 0.2, 1, 0)
+addmargins(table(testCaravan$Purchase, xgbpred))
+```
+
+The raw error rate is actually lower in this sample with the pr = 0.2 threshold. Indicating that this xgb model applied to caravan data prone to overfitting with the parameters that we have specified. 
+
+```{r}
+xgbprob <- predict(c_xgb_scmbl, newdata=c_ts_xg_scmbl)
+xgbpred <- ifelse(xgbprob > 0.4, 1, 0)
+addmargins(table(testCaravan$Purchase, xgbpred))
+```
+Using a higher probability threshold to give us more comprable results still gives us better results than the real data. 
+
+#### Appendix 1 Using Oversampling
+
+Use the `Caravan` data from the `ISLR` package. Read the data description.
+
+a. Compute the proportion of caravans purchased relative to not purchased. Is this a balanced class data set? What problem might be encountered in assessing the accuracy of the model as a consequence?
+
+
+```{r}
+data(Caravan)
+Caravan %>% count(Purchase)
+```
+This is not a balanced dataset, the $No$ class is far larger than the $Yes$ class on this variable. This may cause problems in training, because the majority class can dominate the minority class. Classification results using a model thus trained may be accurate only due to the underlying distribution being learnt, rather than any differentiating features. 
+
+b. Convert the response variable from a factor to an integer variable, where 1 indicates that the person purchased a caravan.
+
+
+```{r}
+myCaravan <- Caravan %>% 
+  mutate(Purchase = as.integer(ifelse(Caravan$Purchase == "Yes", 1, 0)))
+```
+
+```{r}
+#library(imbalance)
+#balCaravan <- imbalance::oversample(Caravan, ratio=0.5, classAttr="Purchase")
+balCaravan <- balCaravan %>% mutate(Purchase = as.integer(ifelse(balCaravan$Purchase == "Yes", 1, 0)))
+```
+
+c. Break the data into 2/3 training and test set, ensuring that the same ratio of the response variable is achieved in both sets. Check that your sampling has produced this.
+
+```{r}
+set.seed(123)
+trainIndex   <- createDataPartition(balCaravan$Purchase, times=1, list=F, p=0.666666666667, groups=2)
+trainCaravan <- balCaravan[trainIndex,]
+testCaravan  <- balCaravan[-trainIndex,]
+testCount    <- count(testCaravan, Purchase)
+trainCount   <- count(trainCaravan, Purchase)
+testPct      <- testCount$n[2]/(testCount$n[2]+testCount$n[1])
+trainPct     <- trainCount$n[2]/(trainCount$n[2]+trainCount$n[1])
+
+sprintf("The %% of Purchase is %f in the test set and %f in the training set", testPct*100, trainPct*100)
+sprintf("the proportions are pretty close with this seed")
+```
+d. The solution code on the unofficial solution web site:
+
+```
+train = 1:1000
+Caravan$Purchase = ifelse(Caravan$Purchase == "Yes", 1, 0)
+Caravan.train = Caravan[train, ]
+Caravan.test = Caravan[-train, ]
+```
+would use just the first 1000 cases for the training set. What is wrong about doing this?
+
+It is not taking a random sample, but rather a convenience sample. 
+
+### 3. 
+
+Here we will fit a boosted tree model, using the `gbm` package.  
+
+a. Use 1000 trees, and a shrinkage value of 0.01. 
+
+```{r}
+c_boost = gbm(Purchase~., data = trainCaravan, n.trees = 3000, shrinkage = 0.01, 
+    distribution = "Bernoulli")
+head(summary(c_boost, plotit=FALSE), 6)
+```
+```{r}
+best.iter <- gbm.perf(c_boost, method = "OOB")
+print(best.iter)
+```
+
+b. Make a plot of the oob improvement against iteration number. What does this suggest about the number of iterations needed? Why do you think the oob improvement value varies so much, and can also be negative?
+
+```{r}
+c_boost_diag <- tibble(iter=1:3000, tr_err=c_boost$train.error, oob_improve=c_boost$oobag.improve)
+ggplot(c_boost_diag, aes(x=iter, y=oob_improve)) + geom_point() + geom_smooth()
+```
+
+c. Compute the error for the test set, and for each class. Consider a proportion 0.2 or greater to indicate that the customer will purchase a caravan.
+
+```{r}
+boost.prob = predict(c_boost, testCaravan, n.trees = 1000, type = "response")
+boost.pred = ifelse(boost.prob > 0.5, 1, 0)
+addmargins(table(testCaravan$Purchase, boost.pred))
+```
+
+d. What are the 6 most important variables? Make a plot of each to examine the relationship between these variables and the response. Explain what you learn from these plots.
+
+PPLEZIER	PPLEZIER	24.142909		
+PPERSAUT	PPERSAUT	23.061736		
+PBRAND	  PBRAND	  6.043500		
+ALEVEN	  ALEVEN	  4.755354		
+APERSAUT	APERSAUT	3.695288		
+MKOOPKLA	MKOOPKLA	3.043218	
+
+
+
+### 4. 
+
+Here we will fit a random forest model, using the `randomForest` package.  
+
+a. Use 1000 trees, using a numeric response so that predictions will be a number between 0-1, and set `importance=TRUE`. (Ignore the warning about not having enough distinct values to use regression.)
+
+```{r}
+c_rf <- randomForest(Purchase ~ ., data=trainCaravan, ntree=1000, importance=TRUE)
+```
+
+b. Compute the error for the test set, and for each class. Consider a proportion 0.2 or greater to indicate that the customer will purchase a caravan.
+
+```{r}
+rf.prob <- predict(c_rf, newdata=testCaravan)
+rf.pred <- ifelse(rf.prob > 0.4, 1, 0)
+addmargins(table(testCaravan$Purchase, rf.pred))
+```
+
+
+c. What are the 6 most important variables? Make a plot of any that are different from those chosen by `gbm`. How does the set of variables compare with those chosen by `gbm`.
+
+```{r}
+as_tibble(c_rf$importance) %>% 
+  bind_cols(var=rownames(c_rf$importance)) %>%
+  arrange(desc(IncNodePurity)) %>% print(n=6)
+```
+
+### 5. 
+
+Here we will fit a gradient boosted model, using the `xgboost` package.
+
+a.  Read the description of the XGBoost technique at https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/, or other sources. Explain how this algorithm might differ from earlier boosted tree algorithms.
+
+b. Tune the model fit to determine how many iterations to make. Then fit the model, using the parameter set provided.
+
+```{r}
+c_tr_xg <- xgb.DMatrix(data = as.matrix(trainCaravan[,1:85]), label = trainCaravan[,86])
+c_ts_xg <- xgb.DMatrix(data = as.matrix(testCaravan[,1:85]), label = testCaravan[,86])
+
+params <- list(booster = "gbtree", objective = "binary:logistic", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
+
+xgbcv <- xgb.cv(params = params, data = c_tr_xg, nrounds = 150, nfold = 5, showsd = T, stratified = T, maximize = F)
+
+c_xgb <- xgb.train(params = params, data = c_tr_xg, nrounds = 10, watchlist = list(val=c_ts_xg,train=c_tr_xg), maximize = F , eval_metric = "error")
+```
+
+b. Compute the error for the test set, and for each class. Consider a proportion 0.2 or greater to indicate that the customer will purchase a caravan.
+
+```{r}
+xgbprob <- predict(c_xgb, newdata=c_ts_xg)
+xgbpred <- ifelse(xgbprob > 0.4, 1, 0)
+addmargins(table(testCaravan$Purchase, xgbpred))
+```
+
+c. Compute the variable importance. What are the 6 most important variables? Make a plot of any that are different from those chosen by `gbm` or `randomForest`. How does the set of variables compare with the other two methods.
+
+```{r}
+c_xgb_importance <- xgb.importance(feature_names = colnames(trainCaravan[,1:85]), model = c_xgb)
+head(c_xgb_importance, 6)
+```
+
+### 6. 
+
+Compare and summarise the results of the three model fits. 
+                gbm     rf      xgb
+misclassified 	135	    161	    382
+false positives	35	    132	    332
+false negatives	100	    29	    50
+accuracy	      0.9304	0.9170	0.8031
+
+### 7. 
+
+Now scramble the response variable (Purchase) using permutation. The resulting data has no true relationship between the response and predictors. Re-do Q5 with this data set. Write a paragraph explaining what you learn about the true data from analysing this permuted data.
+
 

@@ -1,0 +1,115 @@
+---
+title: 'ETC3250/5350: Project report'
+author: "CHANGE ME: Add your team members names here, and team name"
+date: "Jun 7, 2020"
+output: 
+  html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  eval = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 5, 
+  out.width = "100%",
+  fig.retina = 3)
+```
+
+## `r emo::ji("llama")` Introduction
+
+Sentence about the data
+
+- what are the variables, 
+- what are the observations, and how many
+
+INCLUDE YOUR VERSION OF A SKETCH OF SAMPLES, eg
+
+```{r fig.height=2}
+load("data/sketches_train.rda")
+library(ggpubr)
+library(tidyverse)
+sketch1 <- sketches %>% 
+	group_by(word) %>%
+	sample_n(1) %>%
+	ungroup() %>%
+	pivot_longer(cols = contains("V"), names_to = "pixel", values_to = "grey") %>%
+	mutate(pixel = as.numeric(sub("V", "", pixel))) %>%
+	mutate(x=(pixel-1)%%28+1, y = -(floor((pixel-1)/28)+1))
+ggplot(sketch1, aes(x=x, y=y, fill=grey)) + geom_tile() + 
+	scale_fill_distiller("", palette="Greys", direction=1) + 
+	facet_wrap(~word, ncol=6) + theme_transparent() + 
+	theme(aspect.ratio=1, legend.position="none")
+```
+
+## `r emo::ji("wrench")` Methodology  
+
+The data is structurally similar to the popular MNIST and Fashion MNIST datasets that are a common benchmark and starting point for machine learning research and learning. To achieve the best classification performance, we examined the current benchmark for Fashion MNIST classification, which shows that a deep residual neural network with preactivations and Fmix augmentation is currently the leader. However reproducing this is beyond the scope and timeframe of this project. 
+
+With resource and learning curve of cutting edge deep learning technologies in mind, the author used off the shelf network architectures that are popularly being regarded as being robust and having high predictive performance. Such networks include Resnets, both 18 and 34 layers deep, this has the following architecture. 
+
+![](https://miro.medium.com/max/512/1*kBlZtheCjJiA3F1e0IurCw.png)
+
+Due to the small size of the data and the dataset in general, training time is not a severe limitation. Therefore a Resnet-34 architecture was used for majority of training. Due to related work in George's FYP, it is also examined whether additional classification performance can be obtained by up-sampling the dataset using a cutting edge ESRGAN network to improve signal to noise ratio and allow for great flexibility in data augmentation, in the limited conditions considered, this appears to greatly improve classification performance by up to 2x.
+
+The fastai framework for pytorch was used to eliminate boilerplate engineering code and gain useful default parameters and transformations. Notably it automates using LN Smith's one cycle tuning policy. 
+
+Furthermore there are some samples that are should not attributed to a class/contribute any information that the network can use. Therefore we have also removed them, which showed a minor improvement in performance as well. 
+
+
+
+Other features examined 
+
+
+| Model                                   | Error_Rate | Kaggle Accuracy |
+|-----------------------------------------|------------|-----------------|
+| Simplenet                               | 0.088      | 0.916           |
+| Resnet-34 Baseline with Mixup           | 0.130      |                 |
+| Resnet-34 with Mixup and Up-sampled Data| 0.062      | 9.350           |
+| Resnet-34 with Cleaned Up-sampled Data  | 0.046      | 9.433           |
+| Resnet-34 with Up-sampled Data          | 0.051      |                 |
+| Resnet-18 ""                            | 0.053      | 9.450           |
+ 
+
+## `r emo::ji("seedling")` Results and Discussion
+
+This includes for example graphs and tables, as well as a discussion of the results. You should summarise your training error, the important variables. Include at least one plot that is important, ideally of the important variables, or of observations that are consistently misclassified. It could be good to have one interesting fact about the data. 
+
+```{r}
+library(gridExtra)
+library(ggpubr)
+p1 <- ggplot(data=sketches, aes(x=word, y=V71, fill=word)) + geom_violin() + theme_minimal() + theme(legend.position = "none")
+p2 <- ggplot(data=sketches, aes(x=word, y=V99, fill=word)) + geom_violin() + theme_minimal() + theme(legend.position = "none")
+grid.arrange(p1, p2, ncol=2)
+```
+
+## `r emo::ji("moon_cake")` Conclusion
+
+Short paragraph about what you have learned from the model, getting to your best model, and about the data . 
+
+##  `r emo::ji("apple")` References
+
+Cite any sources for the modelling
+
+Cite all R packages (or other software) used in the work. 
+
+For example:
+
+Gareth James, Daniels Witten, Trevor Hastie, Robert Tibshirani. (2013). An Introduction to Statistical Learning: with Applications in R. New York :Springer.
+
+Tianqi Chen, Tong He, Michael Benesty, Vadim Khotilovich, Yuan
+  Tang, Hyunsu Cho, Kailong Chen, Rory Mitchell, Ignacio Cano,
+  Tianyi Zhou, Mu Li, Junyuan Xie, Min Lin, Yifeng Geng and Yutian
+  Li (2019). xgboost: Extreme Gradient Boosting. R package version
+  0.90.0.2. https://CRAN.R-project.org/package=xgboost
+  
+
+**This section does NOT count in the 5 pages**
+
+## `r emo::ji("cricket")` Appendix
+
+Anything else you  would like to include but that are not the most important things. 
+
+**This section does NOT count in the 5 pages**
