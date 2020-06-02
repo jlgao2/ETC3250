@@ -46,21 +46,31 @@ ggplot(sketch1, aes(x=x, y=y, fill=grey)) + geom_tile() +
 
 ## `r emo::ji("wrench")` Methodology  
 
-The data is structurally similar to the popular MNIST and Fashion MNIST datasets that are a common benchmark and starting point for machine learning research and learning. To achieve the best classification performance, we examined the current benchmark for Fashion MNIST classification, which shows that a deep residual neural network with preactivations and Fmix augmentation is currently the leader. However reproducing this is beyond the scope and timeframe of this project. 
+The data is structurally similar to the popular MNIST[1] and Fashion MNIST[2] datasets that are a common benchmark and starting point for machine learning research and learning. To achieve the best classification performance, a deep residual neural network with preactivations and Fmix augmentation is currently the benchmark model for this classification task, a similar approach is ideally used as a starting point. However reproducing the entirety of the paper is beyond the scope and timeframe of this project and some simplifications must be made. 
 
-With resource and learning curve of cutting edge deep learning technologies in mind, the author used off the shelf network architectures that are popularly being regarded as being robust and having high predictive performance. Such networks include Resnets, both 18 and 34 layers deep, this has the following architecture. 
+With the resource and learning curve of cutting edge deep learning technologies in mind, the authors used off the shelf network architectures that are popularly being regarded as being robust and having high predictive performance. Such networks include Residual Networks[3] (Resnets), both 18 and 34 layers deep, this has the following architecture. 
 
 ![](https://miro.medium.com/max/512/1*kBlZtheCjJiA3F1e0IurCw.png)
 
-Due to the small size of the data and the dataset in general, training time is not a severe limitation. Therefore a Resnet-34 architecture was used for majority of training. Due to related work in George's FYP, it is also examined whether additional classification performance can be obtained by up-sampling the dataset using a cutting edge ESRGAN network to improve signal to noise ratio and allow for great flexibility in data augmentation, in the limited conditions considered, this appears to greatly improve classification performance by up to 2x.
+Due to the small size of the data and the dataset in general, training time is not a severe limitation. Therefore a Resnet-34 architecture was used for majority of training. 
 
-The fastai framework for pytorch was used to eliminate boilerplate engineering code and gain useful default parameters and transformations. Notably it automates using LN Smith's one cycle tuning policy. 
+Due to related work in George's FYP, it is also examined whether additional classification performance can be obtained by up-sampling the dataset using an Enhances Super-Resolution Generative Adversarial Network (ESRGAN) [4] network to improve signal to noise ratio and allow for great flexibility in data augmentation, in the limited conditions considered, this appears to greatly improve classification performance by up to 2x.
+
+The fastai framework[5] for pytorch[6] was used to eliminate boilerplate engineering code and gain useful default parameters and transformations. Notably it automates the application of LN Smith's one cycle tuning policy[7]. 
+
+![Learning rate finder](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/learning_rate_finder.png)
+
+The learning rate range used for the one cycle training policy is found by running a range of learning rates over one epoch and finding a section where it descends towards the absolute minima.
+
+The default transformations used for data augmentation are. The network was used with 
+
+    get_transforms(do_flip:bool=True, flip_vert:bool=False, max_rotate:float=10.0, max_zoom:float=1.1, max_lighting:float=0.2, max_warp:float=0.2, p_affine:float=0.75, p_lighting:float=0.75, 
 
 Furthermore there are some samples that are should not attributed to a class/contribute any information that the network can use. Therefore we have also removed them, which showed a minor improvement in performance as well. 
 
+![Bad images](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/Discarded_images.png)
 
-
-Other features examined 
+Brief summary of models studied
 
 
 | Model                                   | Error_Rate | Kaggle Accuracy |
@@ -76,6 +86,13 @@ Other features examined
 ## `r emo::ji("seedling")` Results and Discussion
 
 This includes for example graphs and tables, as well as a discussion of the results. You should summarise your training error, the important variables. Include at least one plot that is important, ideally of the important variables, or of observations that are consistently misclassified. It could be good to have one interesting fact about the data. 
+
+![Progress when training last cycle](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/accuracy_epoch.png)
+
+![Confusion matrix](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/confusion_matrix.png)
+![Most misclassified data](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/top_losses.png)
+
+
 
 ```{r}
 library(gridExtra)
