@@ -46,17 +46,17 @@ ggplot(sketch1, aes(x=x, y=y, fill=grey)) + geom_tile() +
 
 ## `r emo::ji("wrench")` Methodology  
 
-The data is structurally similar to the popular MNIST[1] and Fashion MNIST[2] datasets that are a common benchmark and starting point for machine learning research and learning. To achieve the best classification performance, a deep residual neural network with preactivations and Fmix augmentation is currently the benchmark model for this classification task, a similar approach is ideally used as a starting point. However reproducing the entirety of the paper is beyond the scope and timeframe of this project and some simplifications must be made. 
+The data is structurally similar to the popular MNIST[7] and Fashion MNIST[2] datasets that are a common benchmark and starting point for machine learning research and learning. To achieve the best classification performance, a deep residual neural network with preactivations and Fmix augmentation is currently the benchmark model for this classification task[4], a similar approach is ideally used as a starting point. However reproducing the entirety of the paper is beyond the scope and timeframe of this project and some simplifications must be made. 
 
-With the resource and learning curve of cutting edge deep learning technologies in mind, the authors used off the shelf network architectures that are popularly being regarded as being robust and having high predictive performance. Such networks include Residual Networks[3] (Resnets), both 18 and 34 layers deep, this has the following architecture. 
+With the resource and learning curve of cutting edge deep learning technologies in mind, the authors used off the shelf network architectures that are popularly being regarded as being robust and having high predictive performance. Such networks include Residual Networks[5] (Resnets), both 18 and 34 layers deep, this has the following architecture. 
 
 ![](https://miro.medium.com/max/512/1*kBlZtheCjJiA3F1e0IurCw.png)
 
 Due to the small size of the data and the dataset in general, training time is not a severe limitation. Therefore a Resnet-34 architecture was used for majority of training. 
 
-Due to related work in George's FYP, it is also examined whether additional classification performance can be obtained by up-sampling the dataset using an Enhances Super-Resolution Generative Adversarial Network (ESRGAN) [4] network to improve signal to noise ratio and allow for great flexibility in data augmentation, in the limited conditions considered, this appears to greatly improve classification performance by up to 2x.
+Due to related work in George's FYP, it is also examined whether additional classification performance can be obtained by up-sampling the dataset using an Enhances Super-Resolution Generative Adversarial Network (ESRGAN) [11] network to improve signal to noise ratio and allow for great flexibility in data augmentation, in the limited conditions considered, this appears to greatly improve classification performance by up to 2x.
 
-The fastai framework[5] for pytorch[6] was used to eliminate boilerplate engineering code and gain useful default parameters and transformations. Notably it automates the application of LN Smith's one cycle tuning policy[7]. 
+The fastai framework[6] for pytorch[1] was used to eliminate boilerplate engineering code and gain useful default parameters and transformations. Notably it automates the application of LN Smith's one cycle tuning policy[2].  
 
 ![Learning rate finder](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/learning_rate_finder.png)
 
@@ -66,7 +66,7 @@ The default transformations used for data augmentation are. The network was used
 
     get_transforms(do_flip:bool=True, flip_vert:bool=False, max_rotate:float=10.0, max_zoom:float=1.1, max_lighting:float=0.2, max_warp:float=0.2, p_affine:float=0.75, p_lighting:float=0.75, 
 
-Furthermore there are some samples that are should not attributed to a class/contribute any information that the network can use. Therefore we have also removed them, which showed a minor improvement in performance as well. 
+Furthermore there are some samples that are should not attributed to a class/contribute any information that the network can use. Therefore we have also removed them, which resulted in a minor improvement in performance as well. 
 
 ![Bad images](https://raw.githubusercontent.com/jlgao2/ETC3250/master/images/Discarded_images.png)
 
@@ -108,20 +108,19 @@ Short paragraph about what you have learned from the model, getting to your best
 
 ##  `r emo::ji("apple")` References
 
-Cite any sources for the modelling
+[1]A. Paszke et al., ‘PyTorch: An imperative style, high-performance deep learning library’, in Advances in Neural Information Processing Systems, 2019, pp. 8024–8035.
+[2]L. N. Smith and N. Topin, ‘Super-convergence: Very fast training of neural networks using large learning rates’, in Artificial Intelligence and Machine Learning for Multi-Domain Operations Applications, 2019, vol. 11006, p. 1100612.
+[3]S. Chetlur et al., ‘cudnn: Efficient primitives for deep learning’, arXiv preprint arXiv:1410.0759, 2014.
+[4]E. Harris, A. Marcu, M. Painter, M. Niranjan, A. Prügel-Bennett, and J. Hare, ‘Understanding and Enhancing Mixed Sample Data Augmentation’, arXiv preprint arXiv:2002.12047, 2020.
+[5]K. He, X. Zhang, S. Ren, and J. Sun, ‘Deep Residual Learning for Image Recognition’, arXiv:1512.03385 [cs], Dec. 2015, Accessed: Jun. 02, 2020. [Online]. Available: http://arxiv.org/abs/1512.03385.
+[6]J. Howard and S. Gugger, ‘Fastai: A layered API for deep learning’, Information, vol. 11, no. 2, p. 108, 2020.
+[7]Y. LeCun, C. Cortes, and C. J. Burges, ‘The MNIST database of handwritten digits, 1998’, URL http://yann. lecun. com/exdb/mnist, vol. 10, p. 34, 1998.
+[8]T. E. Oliphant, ‘Python for scientific computing’, Computing in Science & Engineering, vol. 9, no. 3, pp. 10–20, 2007.
+[9]L. N. Smith, ‘A disciplined approach to neural network hyper-parameters: Part 1–learning rate, batch size, momentum, and weight decay’, arXiv preprint arXiv:1803.09820, 2018.
+[10]S. van der Walt, S. C. Colbert, and G. Varoquaux, ‘The NumPy array: a structure for efficient numerical computation’, Computing in Science & Engineering, vol. 13, no. 2, pp. 22–30, 2011.
+[11]X. Wang et al., ‘ESRGAN: Enhanced Super-Resolution Generative Adversarial Networks’, arXiv:1809.00219 [cs], Sep. 2018, Accessed: Jun. 02, 2020. [Online]. Available: http://arxiv.org/abs/1809.00219.
+[12]H. Zhang, M. Cisse, Y. N. Dauphin, and D. Lopez-Paz, ‘mixup: Beyond empirical risk minimization’, arXiv preprint arXiv:1710.09412, 2017.
 
-Cite all R packages (or other software) used in the work. 
-
-For example:
-
-Gareth James, Daniels Witten, Trevor Hastie, Robert Tibshirani. (2013). An Introduction to Statistical Learning: with Applications in R. New York :Springer.
-
-Tianqi Chen, Tong He, Michael Benesty, Vadim Khotilovich, Yuan
-  Tang, Hyunsu Cho, Kailong Chen, Rory Mitchell, Ignacio Cano,
-  Tianyi Zhou, Mu Li, Junyuan Xie, Min Lin, Yifeng Geng and Yutian
-  Li (2019). xgboost: Extreme Gradient Boosting. R package version
-  0.90.0.2. https://CRAN.R-project.org/package=xgboost
-  
 
 **This section does NOT count in the 5 pages**
 
