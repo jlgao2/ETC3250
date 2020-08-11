@@ -1,0 +1,337 @@
+---
+title: "ETC3250 Assignment 4"
+date: "SOLUTION"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  eval = TRUE,
+  message = FALSE,
+  warning = FALSE)
+```
+
+
+## Exercises
+
+1. Here we explore the maximal margin classifier on a toy data set.
+
+```{r}
+library(tidyverse)
+df <- tibble(id=1:15, x1=c(2, 4, 1, 4, 3, 4, 2, 5, 3, 1, 1, 2, 0, 1, 0), 
+             x2=c(4, 2, 5, 4, 3, 3, 5, 3, 1, 3, 1, 1, 2, 2, 3), 
+             class=c(rep(-1, 8), rep(1, 7)))
+```
+
+**See solution for similar textbook problem at https://blog.princehonest.com/stat-learning/ch9/3.html**
+
+a. We are given $n = 7$ observations in $p = 2$ dimensions. For each observation, there is an associated class label. Sketch the observations.
+
+```{r}
+ggplot(df, aes(x1, x2, colour=factor(class), shape=factor(class))) + 
+  geom_point(size=3) + scale_colour_brewer("", palette="Dark2") +
+  xlim(c(0,5)) + ylim(c(0,5)) + theme(aspect.ratio=1, 
+                                      legend.position = "none")
+```
+
+b. Sketch the optimal separating hyperplane, and provide the equation for this hyperplane in the form of textbook equation 9.1. 
+
+**The maximal separating hyperplane goes through (3.5, 1.5) and (1.5, 3.5).**
+
+```{r}
+ggplot(df, aes(x1, x2, colour=factor(class), shape=factor(class))) + 
+  geom_point(size=3) + scale_colour_brewer("", palette="Dark2") +
+  xlim(c(0,5)) + ylim(c(0,5)) + theme(aspect.ratio=1, 
+                                      legend.position = "none") +
+  geom_abline(intercept=5, slope=-1)
+```
+
+c. Write the classification rule for the maximal margin classifier.
+
+**The separating  hyperplane is $$x2=-x1+5$$, or $$-5+x1+x2=0$$**
+
+**So the rule would be:**
+
+*If $x1+x2 \leq 5$ assign to group 1, otherwise assign to group -1.*
+
+*or, alternatively*
+
+*if $-5+x1+x2>0$ assign to class 1, otherwise assign to class -1*
+
+d. On your sketch, indicate the margin for the maximal margin hyperplane.
+
+```{r}
+ggplot(df, aes(x1, x2, colour=factor(class), shape=factor(class))) + 
+  geom_point(size=3) + scale_colour_brewer("", palette="Dark2") +
+  xlim(c(0,5)) + ylim(c(0,5)) + theme(aspect.ratio=1, 
+                                      legend.position = "none") +
+  geom_abline(intercept=5, slope=-1) +
+  geom_abline(intercept=c(4,6), slope=c(-1, -1), linetype=2) 
+```
+
+e. Indicate the support vectors for the maximal margin classifier.
+
+```{r}
+ggplot(df, aes(x1, x2, colour=factor(class), shape=factor(class))) + 
+  geom_point(size=3) + scale_colour_brewer("", palette="Dark2") +
+  xlim(c(0,5)) + ylim(c(0,5)) + theme(aspect.ratio=1, 
+                                      legend.position = "none") +
+  geom_abline(intercept=5, slope=-1) +
+  geom_abline(intercept=c(4,6), slope=c(-1, -1), linetype=2) +
+  geom_point(data=df[c(1,2,3,5,9,10),], shape=7, size=5)
+```
+
+f. Argue that a slight movement of observation 4 would not affect the maximal margin hyperplane.
+
+**This observation is not  a support vector, and thus does not influence the hyperplane calculation.**
+
+g. Sketch a separating hyperplane that is *not* the optimal separating hyper- plane, and provide the equation for this hyperplane.
+
+```{r}
+ggplot(df, aes(x1, x2, colour=factor(class), shape=factor(class))) + 
+  geom_point(size=3) + scale_colour_brewer("", palette="Dark2") +
+  xlim(c(0,5)) + ylim(c(0,5)) + theme(aspect.ratio=1, 
+                                      legend.position = "none") +
+  geom_abline(intercept=4.25, slope=-0.7) 
+```
+
+h. How would the separating hyperplane change if an 8th observation (16, 2.5, 2.5, 1) as added to the data? 
+
+**It would shift the plane upwards, probably by 0.5.**
+
+i. Using the `svm` function of the `e1071` package fit the linear svm model to this data. Compare the result with your hand calculation.
+
+```{r}
+library(e1071)
+df <- tibble(id=1:16, x1=c(2, 4, 1, 4, 3, 4, 2, 5, 3, 1, 1, 2, 0, 1, 0,2), 
+             x2=c(4, 2, 5, 4, 3, 3, 5, 3, 1, 3, 1, 1, 2, 2, 3,2.65), 
+             class=c(rep(-1, 8), rep(1, 8)))
+
+
+df_grid <- expand_grid(x1=seq(min(df$x1), max(df$x1), 0.1), 
+                       x2=seq(min(df$x2), max(df$x2), 0.1))
+df_svm <- svm(class~x1+x2, data=df, kernel="linear", cost=0.5)
+df_grid$class <-  predict(df_svm, df_grid)
+df_grid$class <- ifelse(df_grid$class>0, 1, -1)
+#cf <- coef(df_svm)
+ggplot() + 
+  geom_point(data=df_grid, aes(x=x1, y=x2, colour=factor(class)), alpha=0.5) +
+  geom_point(data=df, aes(x1, x2, colour=factor(class), shape=factor(class)),size=3) + 
+  scale_colour_brewer("", palette="Dark2") +
+  #geom_abline(intercept=-cf[1]/cf[3], slope=-cf[2]/cf[3]) +
+ # xlim(c(0,5)) + ylim(c(0,5)) + 
+  theme(aspect.ratio=1, legend.position = "none") 
+
+coef(df_svm)  
+
+```
+
+### Bagging and boosting on the ISLR caravan data set. 
+
+**This exercise is based on the lab material in chapter 8 of the textbook, and exercise 11. Solutions to the textbook exercise can be found at https://blog.princehonest.com/stat-learning/ch8/11.html.**
+
+
+2. Use the `Caravan` data from the `ISLR` package. Read the data description.
+
+a. Compute the proportion of caravans purchased relative to not purchased. Is this a balanced class data set? What problem might be encountered in assessing the accuracy of the model as a consequence?
+
+```{r}
+library(tidyverse)
+library(ISLR)
+data(Caravan)
+library(xgboost)
+library(gbm)
+library(randomForest)
+library(caret)
+Caravan %>% count(Purchase)
+```
+
+**It's not a balanced data set, because there are few caravan purchasers. It means that in assessing the model we need to separately look at the error for each class, because the overall error will be dominated by the error for non-purchasers.**
+
+b. Convert the response variable from a factor to an integer variable, where 1 indicates that the person purchased a caravan.
+
+```{r}
+mycaravan <- Caravan %>% 
+  mutate(Purchase = as.integer(ifelse(Caravan$Purchase == "Yes", 1, 0)))
+```
+
+c. Break the data into 2/3 training and test set, ensuring that the same ratio of the response variable is achieved in both sets. Check that your sampling has produced this.
+
+```{r}
+set.seed(20200515)
+tr_indx <- createDataPartition(mycaravan$Purchase, p=2/3)$Resample1
+c_tr = mycaravan[tr_indx, ]
+c_ts = mycaravan[-tr_indx, ]
+```
+
+**It does produce the same proportions in each group.**
+
+d. The solution code on the unofficial solution web site:
+
+```
+library(ISLR)
+train = 1:1000
+Caravan$Purchase = ifelse(Caravan$Purchase == "Yes", 1, 0)
+Caravan.train = Caravan[train, ]
+Caravan.test = Caravan[-train, ]
+```
+
+would use just the first 1000 cases for the training set. What is wrong about doing this?
+
+**It may be that the first 1000 cases contain all the purchasers, or that these were the early customers. Its generally never good to take the first X cases for training because we might be introducing a difference between training and test sets. The test set should be similar to the training set.**
+
+3. Here we will fit a boosted tree model, using the `gbm` package.  
+
+a. Use 1000 trees, and a shrinkage value of 0.01. 
+
+```{r}
+c_boost = gbm(Purchase ~ ., data = c_tr, n.trees = 1000, shrinkage = 0.01, 
+    distribution = "bernoulli")
+head(summary(c_boost, plotit=FALSE), 6)
+```
+
+b. Make a plot of the oob improvement against iteration number. What does this suggest about the number of iterations needed? Why do you think the oob improvement value varies so much, and can also be negative?
+
+```{r}
+c_boost_diag <- tibble(iter=1:1000, tr_err=c_boost$train.error, oob_improve=c_boost$oobag.improve)
+#ggplot(c_boost_diag, aes(x=iter, y=tr_err)) + geom_line()
+ggplot(c_boost_diag, aes(x=iter, y=oob_improve)) + geom_point() + geom_smooth()
+```
+
+**Probably around 300 iterations might be sufficient, because it plateaus at 0 around that number. The variation on improvement means that some iterations produce worse results. Re-weighting the observations will sometimes worsen the model.**
+
+c. Compute the error for the test set, and for each class. Consider a proportion 0.2 or greater to indicate that the customer will purchase a caravan.
+
+```{r}
+boost.prob = predict(c_boost, c_ts, n.trees = 1000, type = "response")
+boost.pred = ifelse(boost.prob > 0.2, 1, 0)
+addmargins(table(c_ts$Purchase, boost.pred))
+```
+
+**Overall=(62+95)/1940=0.08092784, Non-purchasers=62/1824=0.03399123, Purchasers=95/116=0.8189655**
+
+d. What are the 6 most important variables? Make a plot of each to examine the relationship between these variables and the response. Explain what you learn from these plots.
+
+```{r}
+library(gridExtra)
+library(ggmosaic)
+
+p1 <- ggplot(c_tr, aes(x=Purchase, y=PPLEZIER)) + geom_jitter(height=0, alpha=0.5)
+p2 <- ggplot(c_tr, aes(x=factor(PPLEZIER), fill=factor(Purchase))) + 
+  geom_bar(position="fill") + scale_fill_brewer("", palette="Dark2")
+p3 <- ggplot(c_tr, aes(x=Purchase, y=PPERSAUT)) + geom_jitter(height=0.1, alpha=0.5)
+p4 <- ggplot(c_tr, aes(x=factor(PPERSAUT), fill=factor(Purchase))) + 
+  geom_bar(position="fill") + scale_fill_brewer("", palette="Dark2")
+p5 <- ggplot(c_tr, aes(x=Purchase, y=PBRAND)) + geom_jitter(height=0.1, alpha=0.5)
+p6 <- ggplot(c_tr, aes(x=factor(PBRAND), fill=factor(Purchase))) + 
+  geom_bar(position="fill") + scale_fill_brewer("", palette="Dark2")
+p7 <- ggplot(c_tr, aes(x=Purchase, y=MINKGEM)) + geom_jitter(height=0.1, alpha=0.5)
+p8 <- ggplot(c_tr, aes(x=factor(MINKGEM), fill=factor(Purchase))) + 
+  geom_bar(position="fill") + scale_fill_brewer("", palette="Dark2")
+grid.arrange(p1, p2, p3, p4, p5, p6, p7, p8, ncol=2)
+```
+
+```{r, fig.height=6, fig.width=8}
+# SD: Addition to show mosaic plots
+p = list()
+
+# Get the six most important variables to plot
+v_important_vars = rownames(summary(c_boost, plotit=FALSE)[1:6,])
+
+c <- c_tr %>% 
+    dplyr::select(Purchase, v_important_vars) %>% 
+    mutate_all(as.factor)
+
+for (i in 1:length(v_important_vars)){
+  p[[i]] <- ggplot(c) +
+    geom_mosaic(aes_string(x = product(Purchase), fill = v_important_vars[i])) +
+    labs(x = "Purchase", y = v_important_vars[i]) +
+    scale_fill_brewer(palette="Dark2") +
+    theme(legend.text=element_text(size=6))
+}
+
+grid.arrange(grobs= p, ncol=2)
+
+```
+
+**My recommendation for making these plots is to use a side-by-side dotplot. But we learn immediately that the predictors are primarily categorical. Using jitter can help compare the purchasers against the non-purchasers. Its messy! There doesn't really look like the classification could be good. Another approach is to focus on the proportions in each category of the predictors, using stacked bar chart. This loses the count data, so its still important to use the dotplots, too. From the bar charts, though, it can be seen why the variables are chosen to be important, because some cagtegories of predictors have higher purchase rates. Still, its messy, and doesn't give much confidence about the ability to predict whether a customer will purchase a caravan.**
+
+4. Here we will fit a random forest model, using the `randomForest` package.  
+
+a. Use 1000 trees, using a numeric response so that predictions will be a number between 0-1, and set `importance=TRUE`. (Ignore the warning about not having enough distinct values to use regression.)
+
+```{r}
+c_rf <- randomForest(Purchase~., data=c_tr, ntree=1000, importance=TRUE)
+```
+
+b. Compute the error for the test set, and for each class. Consider a proportion 0.2 or greater to indicate that the customer will purchase a caravan.
+
+```{r}
+rf.prob <- predict(c_rf, newdata=c_ts)
+rf.pred <- ifelse(rf.prob > 0.2, 1, 0)
+addmargins(table(c_ts$Purchase, rf.pred))
+```
+
+**Overall=(89+167)/1940=0.1319588, Non-purchasers=167/1824=0.09155702, Purchasers=89/116=0.0.7672414**
+
+c. What are the 6 most important variables? Make a plot of any that are different from those chosen by `gbm`. How does the set of variables compare with those chosen by `gbm`.
+
+```{r}
+as_tibble(c_rf$importance) %>% bind_cols(var=rownames(c_rf$importance)) %>%
+  arrange(desc(IncNodePurity)) %>% print(n=6)
+```
+
+**Some are the same, but there are some new ones. None of them look any better when they are plotted, than those found by gbm.**
+
+5. Here we will fit a gradient boosted model, using the `xgboost` package.
+
+a.  Read the description of the XGBoost technique at https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/, or other sources. Explain how this algorithm might differ from earlier boosted tree algorithms.
+
+**My understanding is that it is primarily a better weighting optimisation. But this algorithm also seems to have some better calibration for over-fitting, and regularisation to reduce variables.**
+
+b. Tune the model fit to determine how many iterations to make. Then fit the model, using the parameter set provided.
+
+```{r}
+c_tr_xg <- xgb.DMatrix(data = as.matrix(c_tr[,-86]), label = c_tr[,86])
+c_ts_xg <- xgb.DMatrix(data = as.matrix(c_ts[,-86]), label = c_ts[,86])
+
+params <- list(booster = "gbtree", objective = "binary:logistic", eta=0.3, gamma=0, max_depth=6, min_child_weight=1, subsample=1, colsample_bytree=1)
+
+xgbcv <- xgb.cv(params = params, data = c_tr_xg, nrounds = 100, nfold = 5, showsd = T, stratified = T, maximize = F)
+
+c_xgb <- xgb.train(params = params, data = c_tr_xg, nrounds = 10, watchlist = list(val=c_ts_xg,train=c_tr_xg), maximize = F , eval_metric = "error")
+```
+**This would suggest 10 iterations.**
+
+
+
+
+b. Compute the error for the test set, and for each class. Consider a proportion 0.2 or greater to indicate that the customer will purchase a caravan.
+
+```{r}
+xgbpred <- predict(c_xgb, c_ts_xg)
+xgbpred <- ifelse (xgbpred > 0.2, 1, 0)
+addmargins(table(c_ts$Purchase, xgbpred))
+```
+
+**Overall=(114+83)/1940=0.1015464, Non-purchasers=114/1824=0.0625, Purchasers=83/116=0.7155172**
+
+c. Compute the variable importance. What are the 6 most important variables? Make a plot of any that are different from those chosen by `gbm` or `randomForest`. How does the set of variables compare with the other two methods.
+
+```{r}
+c_xgb_importance <- xgb.importance(feature_names = colnames(c_tr[,-86]), model = c_xgb)
+head(c_xgb_importance, 6)
+```
+
+**Some are the same, but there are some new ones. None of them look any better when they are plotted, than those found by gbm.**
+
+6. Compare and summarise the results of the three model fits. 
+
+**The `xgboost` model has a more balanced overall performance. **
+
+7. Now scramble the response variable (Purchase) using permutation. The resulting data has no true relationship between the response and predictors. Re-do the xgboost with this data set. Write a paragraph explaining what you learn about the true data from analysing this permuted data.
+
+**Even though the models for the true data look quite weak, they still provide some predictive ability when comparing against purely random data. That is, the data does has some weak signal.**

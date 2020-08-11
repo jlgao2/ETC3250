@@ -1,0 +1,391 @@
+---
+title: "ETC3250/5250 Assignment 3"
+date: "SOLUTION"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  eval = TRUE,
+  message = FALSE,
+  warning = FALSE)
+```
+
+## Exercises
+
+# 1. 
+
+*About the data*: The chocolates data was compiled by students in a previous class of Prof Cook, by collecting nutrition information on the chocolates as listed on their internet sites. All numbers were normalised to be equivalent to a 100g serving. Units of measurement are listed in the variable name.
+```{r}
+library(tidyverse)
+choc <- read_csv("data/chocolates.csv")
+choc <- choc %>% mutate(Type = as.factor(Type))
+```
+a. (1)Use the tour, with type of chocolate mapped to colour, and write a paragraph on whether the two types of chocolate differ on the nutritional variables. 
+```{r eval=FALSE}
+library(tourr)
+quartz()
+library(RColorBrewer)
+pal <- brewer.pal(3, "Dark2")
+col <- pal[as.numeric(choc$Type)]
+animate_xy(choc[,5:14], axes="bottomleft", col=col)
+```
+**The two groups are different from each other, but they are not spearated groups. There are some chocolates of each type that are more similar to the other type on these nutritional charateristics.**
+
+b. (1)Make a parallel coordinate plot of the chocolates, coloured by type, with the variables sorted by how well they separate the groups. Maybe the "uniminmax" scaling might work best for this data. Write a paragraph explaining how the types of chocolates differ in nutritional characteristics.
+```{r}
+library(GGally)
+library(plotly)
+p <- ggparcoord(choc, columns = 5:14, groupColumn = 4, order="anyClass", scale="uniminmax") +
+  scale_color_brewer(palette="Dark2") + ylab("") + xlab("")
+ggplotly(p)
+```
+**The trend in lines differs for the two types of chocolates. Milk chocolates tend to have higher values on the variables Na, Chol, Sugars and Carbs, and Dark chocolates tend to have higher values on Fiber, TotFat, CalFat, SatFat. Protein and Calories tend not to be different on chocolate types.**
+
+c. (1)Identify one dark chocolate that is masquerading as dark, that is, nutritionally looks more like a milk chocolate. Explain your answer. 
+```{r}
+p <- ggplot(choc, aes(x=Na_mg, y=Fiber_g, colour=Type, label=paste(MFR, Name))) + geom_point() +
+  scale_color_brewer(palette="Dark2") + theme(aspect.ratio=1)
+ggplotly(p)
+```
+**Mars Dark chocolate is one that appears to be more nutritionally similar to milk chocolate.**
+    d. Fit a linear discriminant analysis model, using equal prior probability for each group. 
+```{r}
+library(MASS)
+choc_lda <- lda(Type~., data=choc[,-c(1:3)], prior=c(0.5, 0.5))
+```
+    e. (1)Write down the LDA rule. Make it clear which type of chocolate is class 1 and class 2 relative to the formula in the notes.
+    
+**Take the values from the scaling component of the LDA object, and multiply by the new observation. If the value is greater than** `r sum(choc_lda$means %*% as.matrix(choc_lda$scaling))/2`**, then the chocolate is classified as milk. Note that milk chocolate would be considered class 1, to be consistent with the lecture formula. You can work this out by plugging the means for each group into the formula, and whichever one ends up being positive gives you the group considered to be class 1.**
+
+**Assign the new observation to milk if**
+\begin{align*}
+Calories\times 0.00+
+CalFat \times    0.00+
+TotFat_g \times -0.06+
+SatFat_g \times -0.01+
+Chol_mg \times   0.02+&\\
+Na_mg  \times    0.01+
+Carbs_g \times   0.00+
+Fiber_g \times  -0.17+
+Sugars_g \times  0.02+
+Protein_g\times  0.12 > -0.93&
+\end{align*}
+
+
+#2. 
+
+This question is about decision trees. Here is a sample data set to work with:
+```{r}
+set.seed <- 20200508
+d <- data.frame(id=c(1:8), x=sort(sample(-5:20, 8)), cl=c("A", "A", "A", "B", "B", "A", "B", "B"))
+d
+```
+    a. (1)Write down the formulae for the impurity metric, Gini, for a two group problem. Show that the Gini function has its highest value at 0.5. Explain why a value of 0.5 leads to the worst possible split. 
+
+$$\sum_{i=1}^2  p_i(1-p_i)$$  **where $p_i$ is the proportion of class 1 in the subset.**
+
+```{r eval=TRUE}
+p <- seq(0.05, 0.95, 0.05)
+df <- tibble(p, g=p*(1-p)+(1-p)*p)
+ggplot(df, aes(p, g)) + geom_line() + ylab("Gini impurity")
+```
+
+**A value of 0.5 corresponds to a group with even number of observations in the subset. Thus, it is a very mixed group, and not pure.**
+
+    b. (2)Write an R function to compute the impurity measure. The input should be data frame containing a vector of numeric values, and a vector of the associated classes.
+    
+```{r echo=TRUE}
+mygini <- function(p) {
+  g <- 0
+  if (p>0 && p<1) {
+    g <- 2*p*(1-p)
+  }
+
+  return(g)
+}
+# This only works for two classes, one variable
+mysplit <- function(x, spl, cl) {
+  n <- length(x)
+  cl_unique <- unique(cl)
+  left <- x[x<spl]
+  cl_left <- cl[x<spl]
+  n_l <- length(left)
+  right <- x[x>=spl]
+  cl_right <- cl[x>=spl]
+  n_r <- length(right)
+  p_l <- length(cl_left[cl_left == cl_unique[1]])/n_l
+  p_r <- length(cl_right[cl_right == cl_unique[1]])/n_r
+  if (is.na(p_l)) p_l<-0.5
+  if (is.na(p_r)) p_r<-0.5
+  impurity <- (n_l/n)*mygini(p_l) + (n_r/n)*mygini(p_r)
+  return(impurity)
+}
+```
+
+c. (1)Use your function to compute the entropy impurity measure for every possible split of the sample data. 
+    
+```{r}
+split <- NULL; imp <- NULL;
+for (i in 1:(length(d$x)-1)) {
+  s <- (d$x[i]+d$x[i+1])/2
+  a <- mysplit(d$x, s, d$cl)
+  split <- c(split, s)
+  imp <- c(imp, a)
+}
+d_impurity <- tibble(split, imp)
+d_impurity
+```
+
+d. (1)Make a plot of your splits and the impurity measure. Where would the split be made?
+
+```{r}
+ggplot() + geom_line(data=d_impurity, aes(x=split, y=imp)) +
+  geom_rug(data=d, aes(x=x, colour=factor(cl)), size=3) + 
+  geom_vline(xintercept=d_impurity$split, linetype=2) +
+  scale_colour_brewer(palette="Dark2") +
+  xlab("x") + ylab("Gini impurity") +
+  ylim(c(0, 0.6)) +
+  theme(legend.position="none")
+```
+    e. (2)Fit a classification tree to the chocolates data. Print the tree model.
+
+```{r}
+library(rpart)
+choc_rp <- rpart(Type~., data=choc[,-c(1:3)])
+choc_rp
+```
+    f. (2)Compute Gini impurity measure for all possible splits on the Fiber variable in the chocolates data. Plot this against the splits. Explain where the best split is.
+
+```{r}
+split <- NULL; imp <- NULL;
+ord <- order(choc$Fiber_g)
+x <-choc$Fiber_g[ord]
+cl <- choc$Type[ord]
+for (i in 1:(length(choc$Fiber_g)-1)) {
+  s <- (x[i]+x[i+1])/2
+  a <- mysplit(x, s, cl)
+  split <- c(split, s)
+  imp <- c(imp, a)
+}
+choc_impurity <- tibble(split, imp)
+ggplot() + geom_line(data=choc_impurity, aes(x=split, y=imp)) +  
+  geom_rug(data=choc, aes(x=Fiber_g, colour=Type), size=1, alpha=0.9) + 
+  geom_vline(xintercept=5, linetype=2) +
+  scale_colour_brewer(palette="Dark2") +
+  xlab("Fiber (g)") + ylab("Gini impurity") +
+  ylim(c(0, 0.5)) +
+  theme(legend.position="none") 
+```
+    g. (2)Compute Gini impurity measure for all possible splits on all of the other nutrition variables. Plot all of these values against the split, all 10 plots. Why did the "rpart" function chose to make the first split on Fiber? Are there other possible candidates for splitting, that are almost as good as the one chosen by the tree? Explain.
+
+```{r fig.height=10}
+all <- NULL
+for (j in c(5:14)) { # columns for variables
+  x <- as.vector(as.matrix(choc[,j]))
+  ord <- order(x)
+  x <- x[ord]
+  cl <- choc$Type[ord]
+  split <- NULL; imp <- NULL;
+  for (i in 1:(length(x)-1)) {
+    s <- (x[i]+x[i+1])/2
+    a <- mysplit(x, s, cl)
+    split <- c(split, s)
+    imp <- c(imp, a)
+  }
+  impurity <- tibble(split, imp, var=colnames(choc)[j])
+  all <- bind_rows(all, impurity)
+}
+choc_long <- choc %>% 
+  dplyr::select(Type:Protein_g) %>%
+  pivot_longer(cols=Calories:Protein_g, names_to = "var", values_to = "value") 
+ggplot() + geom_line(data=all, aes(x=split, y=imp)) +  
+  geom_rug(data=choc_long, aes(x=value, colour=Type), alpha=0.9) +
+  scale_colour_brewer(palette="Dark2") +
+  facet_wrap(~var, scales="free_x") +
+  ylab("Gini") + xlab("") +
+  ylim(c(0,0.5)) +
+  geom_hline(yintercept = 0.2451705, colour="red") +
+  theme(legend.position="none")
+```
+
+**Fiber has the lowest impurity value. Sugars_g would have provided an alternative split with (almost) equally low impurity values. If the two values had been exactly the same, the algorithm  would still have selectedFiber, because it precedes Sugars in the list of variables.**
+
+# 3. 
+
+(5)In the simulated data provided, determine how many groups there are, and whether there are any outliers. Explain your answers.
+
+
+**vis_challenge1.csv: Five spherical clusters.**
+
+<img src="images/vis1.png" style="width: 200px" />
+
+```{r eval=FALSE}
+library(tourr)
+library(GGally)
+library(mvtnorm)
+# One elliptical cluster
+x <- rmvnorm(250, sigma=diag(4))
+x[1:50, 1] <- x[1:50, 1] + 5
+x[51:100, 2] <- x[51:100, 2] + 5
+x[101:150, 3] <- x[101:150, 3] + 5
+x[151:200, 4] <- x[151:200, 4] + 5
+x <- data.frame(x)
+quartz()
+animate_xy(x)
+ggscatmat(x)
+write_csv(x, path="data/vis_challenge1.csv")
+```
+
+**vis_challenge2.csv: A single large elliptical shape, with one outlier.**
+
+<img src="images/vis2.png" style="width: 200px" />
+
+```{r eval=FALSE}
+# One elliptical cluster
+x <- rmvnorm(200, 
+  sigma=matrix(c(1, 0.5, 0.6, 0.4, 0.4, 
+                 0.5, 1, 0.3, 0.5, 0.4, 
+                 0.6, 0.3, 1, 0.3, 0.4, 
+                 0.4, 0.5, 0.3, 1, 0.3,
+                 0.4, 0.4, 0.4, 0.3, 1), ncol=5, byrow=T))
+x <- rbind(x, c(2, -2, 2, -2, 2))
+x <- data.frame(x)
+quartz()
+animate_xy(x)
+ggscatmat(x)
+write_csv(x, path="data/vis_challenge2.csv")
+```
+
+**vis_challenge3.csv: A tight spherical cluster, and a large spread of points , actially its a partial shell of a 5D sphere but this is not necesary to detect.**
+
+<img src="images/vis3.png" style="width: 200px" />
+
+```{r eval=FALSE}
+library(geozoo)
+x1 <- sphere.hollow(p=5, n=1200)$points * 3
+x1 <- x1[x1[,5]>0,]
+x1 <- x1[x1[,4]>0,]
+x1 <- x1[x1[,3]>0,]
+x2 <- sphere.solid.random(p=5, n=150)$points
+x <- rbind(x1, x2)
+x <- data.frame(x)
+quartz()
+animate_xy(x)
+ggscatmat(x)
+write_csv(x, path="data/vis_challenge3.csv")
+```
+
+**vis_challenge4.csv: The simulated data has four clusters, one large elliptical cluster and three relatively smaller. There are also five points which are outliers in the first three variables.**
+
+<img src="images/vis4_1.png" style="width: 200px" />
+<img src="images/vis4_2.png" style="width: 200px" />
+
+```{r eval=FALSE}
+# This is the code used to generate the data
+# Cluster 1 has elliptical shape
+x <- rmvnorm(500, 
+  sigma=matrix(c(1, 0.9, 0.7, 0.9, 1, 0.7, 0.7, 0.7, 1), ncol=3, byrow=T))
+# Five outliers added
+x <- data.frame(x)
+y <- data.frame(X1=runif(5, 1, 2), X2=runif(5, -2, -1), X3=runif(5, -2, -1))
+df <- bind_rows(x, y)
+# Add two more columns which are simply noise to cluster 1, and outliers
+df$X4 <- runif(505, -0.5, 0.5)
+df$X5 <- runif(505, -0.5, 0.5)
+# Three additional fairly spherical clusters, which are centered at 0 in first three vars
+# and at (2,2), (-2, -2) and (3, -2.5) in other two vars
+z <- data.frame(X1=runif(200, -0.5, 0.5), X2=runif(200, -0.5, 0.5), 
+                X3=runif(200, -0.5, 0.5), X4=rnorm(200, 2, 0.5), X5=rnorm(200, 2, 0.5))
+w <- data.frame(X1=runif(100, -0.5, 0.5), X2=runif(100, -0.5, 0.5), 
+                X3=runif(100, -0.5, 0.5), X4=rnorm(100, -2, 0.7), X5=rnorm(100, -2, 0.7))
+v <- data.frame(X1=runif(120, -0.5, 0.5), X2=runif(120, -0.5, 0.5), 
+                X3=runif(120, -0.5, 0.5), X4=rnorm(120, 3, 0.7), X5=rnorm(120, -2.5, 0.7))
+df <- bind_rows(df, z, w, v)
+
+quartz()
+animate_xy(x)
+animate_xy(df)
+ggparcoord(df, columns=1:5)
+ggscatmat(df)
+write_csv(df, path="data/vis_challenge4.csv")
+```
+
+**vis_challenge5.csv: This is the famous pollen data the Joint Statistics Meetings 1986 Data Expo that has a hidden word in the middle of a 5D multivariate normal distribution.**
+
+```{r eval=FALSE}
+library(animation)
+data(pollen)
+write_csv(pollen, path="data/vis_challenge5.csv")
+```
+
+```{r eval=FALSE}
+x <- read_csv("data/vis_challenge1.csv")
+x <- read_csv("data/vis_challenge2.csv")
+x <- read_csv("data/vis_challenge3.csv")
+x <- read_csv("data/vis_challenge4.csv")
+quartz()
+animate_xy(x, axes="bottomleft")
+ggscatmat(x)
+x <- read_csv("data/vis_challenge5.csv")
+animate_xy(x, axes="bottomleft", half_range=0.1)
+```
+
+<img src="images/vis5.png" style="width: 200px" />
+
+## References
+
+Dianne Cook (2020) Introduction to Machine Learning slides https://iml.numbat.space
+
+Gareth James, Daniela Witten, Trevor Hastie and Rob Tibshirani (2017). ISLR:
+  Data for an Introduction to Statistical Learning with Applications in R. R
+  package version 1.2. https://CRAN.R-project.org/package=ISLR
+  
+
+Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics.
+  R package version 2.3. https://CRAN.R-project.org/package=gridExtra
+
+Alan Genz, Frank Bretz, Tetsuhisa Miwa, Xuefei Mi, Friedrich
+  Leisch, Fabian Scheipl, Torsten Hothorn (2020). mvtnorm:
+  Multivariate Normal and t Distributions. R package version
+  1.0-12. URL http://CRAN.R-project.org/package=mvtnorm
+  
+Erich Neuwirth (2014). RColorBrewer: ColorBrewer Palettes. R
+  package version 1.1-2.
+  https://CRAN.R-project.org/package=RColorBrewer
+  
+Barret Schloerke (2016). geozoo: Zoo of Geometric Objects. R
+  package version 0.5.1.
+  https://CRAN.R-project.org/package=geozoo
+
+Barret Schloerke, Jason Crowley, Di Cook, Francois Briatte,
+  Moritz Marbach, Edwin Thoen, Amos Elberg and Joseph
+  Larmarange (2018). GGally: Extension to 'ggplot2'. R package
+  version 1.4.0. https://CRAN.R-project.org/package=GGally
+
+C. Sievert. Interactive Web-Based Data Visualization with R,
+  plotly, and shiny. Chapman and Hall/CRC Florida, 2020.
+  
+Terry Therneau and Beth Atkinson (2019). rpart: Recursive Partitioning and
+  Regression Trees. R package version 4.1-15.
+  https://CRAN.R-project.org/package=rpart
+
+Venables, W. N. & Ripley, B. D. (2002) Modern Applied
+  Statistics with S. Fourth Edition. Springer, New York. ISBN
+  0-387-95457-0
+  
+Hadley Wickham et al., (2019). Welcome to the tidyverse. Journal of Open Source
+  Software, 4(43), 1686, https://doi.org/10.21105/joss.01686
+  
+Hadley Wickham, Dianne Cook, Heike Hofmann, Andreas Buja
+  (2011). tourr: An R Package for Exploring Multivariate Data
+  with Projections. Journal of Statistical Software, 40(2),
+  1-18. URL http://www.jstatsoft.org/v40/i02/.
+  
+Yihui Xie (2013). animation: An R Package for Creating
+  Animations and Demonstrating Statistical Methods. Journal of
+  Statistical Software, 53(1), 1-27. URL
+  http://www.jstatsoft.org/v53/i01/.

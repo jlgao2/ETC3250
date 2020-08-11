@@ -1,9 +1,17 @@
 {
-    "path" : "~/R/ETC3250",
+    "path" : "~/R2/ETC3250",
     "sortOrder" : [
         {
             "ascending" : true,
             "columnIndex" : 2
+        },
+        {
+            "ascending" : false,
+            "columnIndex" : 4
+        },
+        {
+            "ascending" : false,
+            "columnIndex" : 3
         }
     ]
 }

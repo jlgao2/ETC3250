@@ -1,0 +1,108 @@
+---
+title: "Predicting Pictionary Sketches "
+author: "Cookie Monster, Kermit, Miss Piggy, The Count"
+date: "June 9 2020"
+pdflink: ""
+bgimg: "images/sketches_image.png"
+output:
+  xaringan::moon_reader:
+    css:
+      - ninjutsu 
+      - "assets/animate.css"
+      - "assets/monash-logo.css"
+      - "assets/monash-brand.css"
+      - "assets/monash-fonts.css"
+      - "assets/styles.css" # small improvements
+      - "assets/custom.css" # add your own CSS here!
+    self_contained: false 
+    seal: false 
+    chakra: 'libs/remark-latest.min.js'
+    lib_dir: libs
+    includes:
+      in_header: "assets/custom.html"
+    mathjax: "assets/mathjax-local/MathJax.js?config=TeX-AMS-MML_HTMLorMML"
+    nature:
+      highlightStyle: github 
+      highlightLanguage: r 
+      highlightLines: true
+      highlightSpans: false 
+      countIncrementalSlides: false
+      slideNumberFormat: '%current%/%total%'
+      navigation:
+        scroll: false 
+        touch: true
+        click: false
+      ratio: '16:9'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+```
+
+```{r titleslide, child="components/titleslide.Rmd"}
+```
+
+---
+# Kaggle result
+
+MAKE SOME SUMMARY OF HOW YOUR TEAM'S MODELS PERFORMED
+
+
+---
+# Approach
+
+__How did you tackle the problem__ 
+--
+
+1. First step was to submit predictions using Random Forest code provided 
+--
+
+2. ...
+--
+
+3. ...
+
+
+---
+# Model Overview
+
+
+OUR BEST MODEL WAS ...
+
+
+
+---
+# Model Details
+
+ARE THERE SPECIFIC THINGS ABOUT YOUR MODEL THAT THE AUDIENCE SHOULD KNOW
+
+---
+# Interesting observations
+
+WERE ANY OBSERVATIONS IN THE TRAINING SET DIFFICULT TO CLASSIFY?
+
+WERE SOME OBJECTS MORE OFTEN CONFUSED WITH OTHER OBJECTS?
+
+---
+Include an image using: 
+
+![](images/sketches_image.png)
+
+---
+
+or you can use this to include an image:
+
+<img src="images/sketches_image.png" width="40%">
+
+---
+# Concluding statements
+
+WHAT WOULD YOU DO DIFFERENTLY NEXT TIME OR WHAT WORKED WELL AND WHAT WAS DIFFICULT
+
+
+---
+```{r endslide, child="components/endslide.Rmd"}
+```
+
+

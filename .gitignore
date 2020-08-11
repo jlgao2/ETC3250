@@ -4,3 +4,13 @@
 *.Rhistory
 **/data
 .Rproj.user
+*.ttf
+*.eot
+*.woff
+*.svg
+*.woff2
+*.js
+*.otf
+*.css
+*.less
+*.scss
